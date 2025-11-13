@@ -1,0 +1,121 @@
+version: '3.8'
+
+services:
+  # Node.js Application
+  nodejs:
+    image: node:24-alpine
+    container_name: lms-nodejs
+    working_dir: /app
+    volumes:
+      - ./app:/app
+      - /app/node_modules
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - DB_HOST=mariadb
+      - DB_USER=lms_user
+      - DB_PASSWORD=lms_password
+      - DB_NAME=lms_database
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    command: sh -c "npm install && npm run dev"
+    depends_on:
+      - mariadb
+      - redis
+    networks:
+      - lms-network
+    restart: unless-stopped
+
+  # MariaDB Database
+  mariadb:
+    image: mariadb:11.2
+    container_name: lms-mariadb
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password_change_me
+      MYSQL_DATABASE: lms_database
+      MYSQL_USER: lms_user
+      MYSQL_PASSWORD: lms_password
+    volumes:
+      - mariadb-data:/var/lib/mysql
+    ports:
+      - "3306:3306"
+    networks:
+      - lms-network
+    restart: unless-stopped
+
+  # phpMyAdmin
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: lms-phpmyadmin
+    environment:
+      PMA_HOST: mariadb
+      PMA_PORT: 3306
+      PMA_USER: root
+      PMA_PASSWORD: root_password_change_me
+      UPLOAD_LIMIT: 100M
+    ports:
+      - "8080:80"
+    depends_on:
+      - mariadb
+    networks:
+      - lms-network
+    restart: unless-stopped
+
+  # Ant Media Server Community Edition
+  antmedia:
+    image: antmedia/antmedia-server:community-latest
+    container_name: lms-antmedia
+    ports:
+      - "5080:5080"      # HTTP
+      - "1935:1935"      # RTMP
+      - "5443:5443"      # HTTPS
+      - "5000:5000"      # WebSocket
+    volumes:
+      - antmedia-data:/usr/local/antmedia
+    environment:
+      - SERVER_NAME=localhost
+    networks:
+      - lms-network
+    restart: unless-stopped
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: lms-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes --requirepass redis_password_change_me
+    networks:
+      - lms-network
+    restart: unless-stopped
+
+  # Jenkins CI/CD
+  jenkins:
+    image: jenkins/jenkins:lts
+    container_name: lms-jenkins
+    user: root
+    ports:
+      - "8081:8080"      # Jenkins Web UI
+      - "50000:50000"    # Jenkins Agent
+    volumes:
+      - jenkins-data:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./app:/app
+    environment:
+      - JENKINS_OPTS=--prefix=/jenkins
+    networks:
+      - lms-network
+    restart: unless-stopped
+
+networks:
+  lms-network:
+    driver: bridge
+
+volumes:
+  mariadb-data:
+  redis-data:
+  antmedia-data:
+  jenkins-data:

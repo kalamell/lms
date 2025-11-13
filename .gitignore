@@ -1,0 +1,34 @@
+# Environment variables
+.env
+
+# Node.js
+app/node_modules/
+app/npm-debug.log
+app/yarn-error.log
+app/.npm
+app/.pnpm-debug.log
+
+# Docker volumes data
+volumes/
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Database backups
+*.sql
+backup/
+
+# Jenkins
+jenkins_home/
