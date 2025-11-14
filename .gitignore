@@ -32,3 +32,4 @@ backup/
 
 # Jenkins
 jenkins_home/
+.claude

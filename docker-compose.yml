@@ -1,5 +1,6 @@
 version: '3.8'
 
+
 services:
   # Node.js Application
   nodejs:
@@ -64,7 +65,12 @@ services:
 
   # Ant Media Server Community Edition
   antmedia:
-    image: antmedia/antmedia-server:community-latest
+    build:
+      context: ./antmedia
+      dockerfile: Dockerfile
+      args:
+        AntMediaServer: ant-media-server-community-2.16.0.zip
+        AMS_VERSION: "2.16.0"
     container_name: lms-antmedia
     ports:
       - "5080:5080"      # HTTP
