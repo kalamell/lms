@@ -69,7 +69,6 @@ services:
       context: ./antmedia
       dockerfile: Dockerfile
       args:
-        AntMediaServer: ant-media-server-community-2.16.0.zip
         AMS_VERSION: "2.16.0"
     container_name: lms-antmedia
     ports:

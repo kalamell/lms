@@ -25,7 +25,7 @@
 
 FROM ubuntu:24.04
 
-ARG AntMediaServer
+ARG AMS_VERSION=2.16.0
 ARG LicenseKey
 ARG InstallMediaPush
 ARG MediaPushVersion
@@ -33,27 +33,16 @@ ARG UseSupervisor=false
 ARG BranchName=master
 
 ENV UseSupervisor=${UseSupervisor}
+ENV AMS_VERSION=${AMS_VERSION}
 
 #Running update and install makes the builder not to use cache which resolves some updates
-RUN apt-get update && apt-get install -y curl wget iproute2 cron logrotate dnsutils iptables jq
-
-ADD ./${AntMediaServer} /home
-
-RUN cd home \
-    && pwd \
-    && wget https://raw.githubusercontent.com/ant-media/Scripts/${BranchName}/install_ant-media-server.sh \
-    && chmod 755 install_ant-media-server.sh
+RUN apt-get update && apt-get install -y curl wget iproute2 cron logrotate dnsutils iptables jq unzip
 
 RUN cd /home \
-    && pwd \
-    && if [ -n "$AntMediaServer" ]; then \
-           ./install_ant-media-server.sh -i ${AntMediaServer} -s false; \
-       elif [ -n "$LicenseKey" ]; then \
-           ./install_ant-media-server.sh -l ${LicenseKey} -s false; \
-       else \
-           echo "Both AntMediaServer and LicenseKey arguments are not provided. Aborting the build process."; \
-           exit 1; \
-       fi
+    && wget https://github.com/ant-media/Ant-Media-Server/releases/download/ams-v${AMS_VERSION}/ant-media-server-community-${AMS_VERSION}.zip \
+    && wget https://raw.githubusercontent.com/ant-media/Scripts/${BranchName}/install_ant-media-server.sh \
+    && chmod 755 install_ant-media-server.sh \
+    && ./install_ant-media-server.sh -i ant-media-server-community-${AMS_VERSION}.zip -s false
 
 RUN if [ "true" = "$InstallMediaPush" ]; then \
         echo "test"; \
