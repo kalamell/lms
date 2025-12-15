@@ -1,0 +1,128 @@
+<!-- Publish Settings -->
+<div class="card mb-4">
+  <div class="card-header">
+    <h5 class="card-title mb-0"><i class="icon-base ri ri-settings-3-line me-2"></i>การเผยแพร่</h5>
+  </div>
+  <div class="card-body">
+    <div class="mb-4">
+      <label class="form-label">สถานะ</label>
+      <select class="form-select" name="status">
+        <option value="2" <%= (!course || course?.status == 2) ? 'selected' : '' %>>Draft</option>
+        <option value="1" <%= course?.status == 1 ? 'selected' : '' %>>Published</option>
+        <option value="0" <%= course?.status == 0 ? 'selected' : '' %>>Inactive</option>
+      </select>
+    </div>
+    <div class="mb-0">
+      <label class="form-label">ประเภทหลักสูตร</label>
+      <select class="form-select" name="type">
+        <option value="1" <%= (!course || course?.type == 1) ? 'selected' : '' %>>Normal</option>
+        <option value="2" <%= course?.type == 2 ? 'selected' : '' %>>SCORM 1.2</option>
+        <option value="3" <%= course?.type == 3 ? 'selected' : '' %>>SCORM 2004 2nd</option>
+        <option value="4" <%= course?.type == 4 ? 'selected' : '' %>>SCORM 2004 3rd</option>
+      </select>
+    </div>
+  </div>
+</div>
+
+<!-- Display Settings -->
+<div class="card mb-4">
+  <div class="card-header">
+    <h5 class="card-title mb-0"><i class="icon-base ri ri-eye-line me-2"></i>การแสดงผล</h5>
+  </div>
+  <div class="card-body">
+    <div class="mb-4">
+      <label class="form-label">การแสดงผล</label>
+      <select class="form-select" name="course_show">
+        <option value="" <%= !course?.course_show ? 'selected' : '' %>>Public</option>
+        <option value="private" <%= course?.course_show == 'private' ? 'selected' : '' %>>Private</option>
+        <option value="secret" <%= course?.course_show == 'secret' ? 'selected' : '' %>>Secret</option>
+      </select>
+    </div>
+    <div class="mb-4">
+      <label class="form-label">การเข้าเรียน</label>
+      <select class="form-select" name="course_access">
+        <option value="" <%= !course?.course_access ? 'selected' : '' %>>เรียนเดี่ยว</option>
+        <option value="group" <%= course?.course_access == 'group' ? 'selected' : '' %>>เรียนกลุ่ม</option>
+      </select>
+    </div>
+    <div class="mb-0">
+      <label class="form-label">Course Group</label>
+      <select class="form-select" name="course_group">
+        <option value="">เลือกกลุ่ม</option>
+        <option value="Core values" <%= course?.course_group == 'Core values' ? 'selected' : '' %>>Core values</option>
+        <option value="Safety & Security" <%= course?.course_group == 'Safety & Security' ? 'selected' : '' %>>Safety & Security</option>
+        <option value="Leadership&Management skills" <%= course?.course_group == 'Leadership&Management skills' ? 'selected' : '' %>>Leadership & Management skills</option>
+        <option value="Learning Dollars" <%= course?.course_group == 'Learning Dollars' ? 'selected' : '' %>>Learning Dollars</option>
+        <option value="Soft Skills" <%= course?.course_group == 'Soft Skills' ? 'selected' : '' %>>Soft Skills</option>
+        <option value="Technical Skills" <%= course?.course_group == 'Technical Skills' ? 'selected' : '' %>>Technical Skills</option>
+      </select>
+    </div>
+  </div>
+</div>
+
+<!-- Options -->
+<div class="card mb-4">
+  <div class="card-header">
+    <h5 class="card-title mb-0"><i class="icon-base ri ri-toggle-line me-2"></i>ตัวเลือก</h5>
+  </div>
+  <div class="card-body">
+    <div class="mb-3">
+      <div class="form-check form-switch">
+        <input class="form-check-input" type="checkbox" id="is_register" name="is_register" value="1"
+               <%= course?.is_register == 1 ? 'checked' : '' %>>
+        <label class="form-check-label" for="is_register">ลงทะเบียนเพื่อเรียน</label>
+      </div>
+    </div>
+    <div class="mb-3">
+      <div class="form-check form-switch">
+        <input class="form-check-input" type="checkbox" id="delete_all" name="delete_all" value="1"
+               <%= course?.delete_all == 1 ? 'checked' : '' %>>
+        <label class="form-check-label" for="delete_all">สามารถลบผลการเรียนได้</label>
+      </div>
+    </div>
+    <div class="mb-3">
+      <div class="form-check form-switch">
+        <input class="form-check-input" type="checkbox" id="fullscreen" name="fullscreen" value="1"
+               <%= course?.fullscreen == 1 ? 'checked' : '' %>>
+        <label class="form-check-label" for="fullscreen">แสดงเนื้อหาเต็มจอ</label>
+      </div>
+    </div>
+    <div class="mb-3">
+      <div class="form-check form-switch">
+        <input class="form-check-input" type="checkbox" id="is_certificated" name="is_certificated" value="1"
+               <%= course?.is_certificated == 1 ? 'checked' : '' %>>
+        <label class="form-check-label" for="is_certificated">ออก Certificate</label>
+      </div>
+    </div>
+    <div class="mb-0">
+      <div class="form-check form-switch">
+        <input class="form-check-input" type="checkbox" id="is_document_lock" name="is_document_lock" value="1"
+               <%= course?.is_document_lock == 1 ? 'checked' : '' %>>
+        <label class="form-check-label" for="is_document_lock">เรียนตามลำดับเอกสาร</label>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Actions -->
+<div class="card">
+  <div class="card-body">
+    <div class="d-grid gap-2">
+      <button type="submit" class="btn btn-success" name="status_action" value="1">
+        <i class="icon-base ri ri-check-line me-2"></i>Publish
+      </button>
+      <button type="submit" class="btn btn-warning" name="status_action" value="2">
+        <i class="icon-base ri ri-draft-line me-2"></i>Save as Draft
+      </button>
+      <a href="/course" class="btn btn-outline-secondary">
+        ยกเลิก
+      </a>
+      <% if (action === 'edit' && course) { %>
+      <hr>
+      <button type="button" class="btn btn-outline-danger" onclick="confirmDelete(<%= course.id %>, '<%= course.name.replace(/'/g, "\\'") %>')">
+        <i class="icon-base ri ri-delete-bin-line me-2"></i>ลบหลักสูตร
+      </button>
+      <% } %>
+    </div>
+  </div>
+</div>

@@ -1,20 +1,74 @@
 import express from 'express';
-import mysql from 'mysql2/promise';
+import expressLayouts from 'express-ejs-layouts';
+import session from 'express-session';
 import { createClient } from 'redis';
 import dotenv from 'dotenv';
 import multer from 'multer';
 import fs from 'fs';
 import path from 'path';
-import FormData from 'form-data';
+import { fileURLToPath } from 'url';
 import jwt from 'jsonwebtoken';
 
+// Config
+import { initLmsDatabase, initTescoDatabase, getLmsDb, getTescoDb } from './config/database.js';
+
+// Routes
+import routes from './routes/index.js';
+
 dotenv.config();
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 const port = process.env.PORT || 3000;
 
+// Debug: Log __dirname
+const assetsPath = path.join(__dirname, 'assets');
+console.log('📁 App directory:', __dirname);
+console.log('📁 Assets path:', assetsPath);
+console.log('📁 Assets exists:', fs.existsSync(assetsPath));
+console.log('📁 Logo exists:', fs.existsSync(path.join(assetsPath, 'images', 'logo_axtra_ilearn_2.png')));
+
+// Static files - MUST be before other middleware
+app.use('/assets', express.static(assetsPath, {
+  dotfiles: 'allow',
+  index: false
+}));
+app.use('/theme', express.static(path.join(__dirname, 'theme')));
+app.use('/public', express.static(path.join(__dirname, 'public')));
+app.use('/uploads', express.static(path.join(__dirname, 'public', 'uploads')));
+app.use('/storage', express.static(path.join(__dirname, 'public', 'storage')));
+app.use('/favicon.svg', express.static(path.join(__dirname, 'public', 'favicon.svg')));
+
+// View Engine - EJS
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'views'));
+app.use(expressLayouts);
+app.set('layout', 'layouts/main');
+app.set('layout extractScripts', true);
+app.set('layout extractStyles', true);
+
 // Middleware
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Session middleware
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'lms-secret-key-change-in-production',
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: process.env.NODE_ENV === 'production',
+    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+  }
+}));
+
+// Make user available in all views
+app.use((req, res, next) => {
+  res.locals.user = req.session ? req.session.user : null;
+  next();
+});
 
 // Setup multer for file uploads
 const uploadDir = '/tmp/uploads';
@@ -40,25 +94,7 @@ const upload = multer({
   }
 });
 
-// Database connection pool
-let dbPool;
-async function initDatabase() {
-  try {
-    dbPool = mysql.createPool({
-      host: process.env.DB_HOST,
-      user: process.env.DB_USER,
-      password: process.env.DB_PASSWORD,
-      database: process.env.DB_NAME,
-      waitForConnections: true,
-      connectionLimit: 10,
-      queueLimit: 0
-    });
-    console.log('✅ Database connected');
-  } catch (err) {
-    console.error('❌ Database connection error:', err.message);
-    setTimeout(initDatabase, 5000);
-  }
-}
+// Database pools (initialized in startServer)
 
 // Redis connection
 let redisClient;
@@ -103,13 +139,19 @@ function generateAntMediaToken() {
   return token;
 }
 
-// Routes
-app.get('/', (req, res) => {
+// ============================================
+// Mount All Routes (MVC Pattern)
+// ============================================
+app.use('/', routes);
+
+// API Status endpoint
+app.get('/api/status', (req, res) => {
   res.json({
-    message: 'Hello World! 🚀',
-    status: 'LMS App is running',
+    message: 'LMS API is running 🚀',
+    status: 'ok',
     services: {
-      database: dbPool ? '✅ Connected' : '❌ Disconnected',
+      database: getLmsDb() ? '✅ Connected' : '❌ Disconnected',
+      tescoDb: getTescoDb() ? '✅ Connected' : '❌ Disconnected',
       redis: redisClient?.isOpen ? '✅ Connected' : '❌ Disconnected',
       antmedia: 'Check /health endpoint'
     }
@@ -136,13 +178,13 @@ app.get('/auth/token', (req, res) => {
 // Health check
 app.get('/health', async (req, res) => {
   try {
-    const dbStatus = dbPool ? 'ok' : 'error';
+    const dbStatus = getLmsDb() ? 'ok' : 'error';
     const redisStatus = redisClient?.isOpen ? 'ok' : 'error';
 
     // Check Ant Media Server
     let antmediaStatus = 'error';
     try {
-      const response = await fetch('http://antmedia:5080/rest/v2/broadcasts/list?appName=Media');
+      const response = await fetch('http://antmedia:5080/rest/v2/broadcasts/list?appName=LiveApp');
       if (response.ok) {
         antmediaStatus = 'ok';
       }
@@ -164,6 +206,7 @@ app.get('/health', async (req, res) => {
 // Test database connection
 app.get('/test/db', async (req, res) => {
   try {
+    const dbPool = getLmsDb();
     if (!dbPool) {
       return res.status(503).json({ error: 'Database not connected' });
     }
@@ -190,97 +233,295 @@ app.get('/test/redis', async (req, res) => {
   }
 });
 
+// ============================================
+// Ant Media REST API Routes
+// ============================================
+
+const ANT_MEDIA_URL = process.env.ANT_MEDIA_URL || 'http://antmedia:5080';
+const DEFAULT_APP = 'LiveApp';
+
+// Helper: Make authenticated request to Ant Media
+async function antMediaRequest(endpoint, options = {}) {
+  const token = generateAntMediaToken();
+  if (!token) throw new Error('Cannot generate JWT token');
+
+  const url = `${ANT_MEDIA_URL}${endpoint}`;
+  const response = await fetch(url, {
+    ...options,
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+      ...options.headers
+    }
+  });
+
+  return response;
+}
+
 // Test Ant Media connection
 app.get('/test/antmedia', async (req, res) => {
   try {
-    const response = await fetch('http://antmedia:5080/rest/v2/broadcasts/list?appName=Media');
+    const token = generateAntMediaToken();
+    const response = await antMediaRequest(`/${DEFAULT_APP}/rest/v2/broadcasts/list/0/10`);
+
     if (!response.ok) {
-      return res.status(503).json({ error: 'Ant Media not responding', status: response.status });
+      const errorText = await response.text();
+      return res.status(response.status).json({
+        error: 'Ant Media not responding',
+        status: response.status,
+        details: errorText,
+        tokenUsed: token ? 'Yes' : 'No'
+      });
     }
+
     const data = await response.json();
-    res.json({ success: true, message: 'Ant Media connection OK', broadcasts: data });
+    res.json({
+      success: true,
+      message: 'Ant Media connection OK',
+      url: ANT_MEDIA_URL,
+      app: DEFAULT_APP,
+      broadcasts: data
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// Upload MP4 to Ant Media Server
-app.post('/upload/mp4', upload.single('video'), async (req, res) => {
+// Get all broadcasts
+app.get('/api/antmedia/broadcasts', async (req, res) => {
+  try {
+    const appName = req.query.app || DEFAULT_APP;
+    const offset = req.query.offset || 0;
+    const size = req.query.size || 50;
+
+    const response = await antMediaRequest(`/${appName}/rest/v2/broadcasts/list/${offset}/${size}`);
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      return res.status(response.status).json({ error: errorText });
+    }
+
+    const data = await response.json();
+    res.json({ success: true, count: data.length, broadcasts: data });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Get broadcast by ID
+app.get('/api/antmedia/broadcasts/:streamId', async (req, res) => {
+  try {
+    const { streamId } = req.params;
+    const appName = req.query.app || DEFAULT_APP;
+
+    const response = await antMediaRequest(`/${appName}/rest/v2/broadcasts/${streamId}`);
+
+    if (!response.ok) {
+      return res.status(response.status).json({ error: 'Broadcast not found' });
+    }
+
+    const data = await response.json();
+    res.json({ success: true, broadcast: data });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Create new broadcast
+app.post('/api/antmedia/broadcasts', async (req, res) => {
+  try {
+    const appName = req.query.app || DEFAULT_APP;
+    const { name, description, type = 'liveStream' } = req.body;
+
+    const response = await antMediaRequest(`/${appName}/rest/v2/broadcasts/create`, {
+      method: 'POST',
+      body: JSON.stringify({ name, description, type })
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      return res.status(response.status).json({ error: errorText });
+    }
+
+    const data = await response.json();
+    res.json({ success: true, broadcast: data });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Delete broadcast
+app.delete('/api/antmedia/broadcasts/:streamId', async (req, res) => {
+  try {
+    const { streamId } = req.params;
+    const appName = req.query.app || DEFAULT_APP;
+
+    const response = await antMediaRequest(`/${appName}/rest/v2/broadcasts/${streamId}`, {
+      method: 'DELETE'
+    });
+
+    if (!response.ok) {
+      return res.status(response.status).json({ error: 'Failed to delete broadcast' });
+    }
+
+    res.json({ success: true, message: 'Broadcast deleted' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Get VoD list
+app.get('/api/antmedia/vod', async (req, res) => {
+  try {
+    const appName = req.query.app || DEFAULT_APP;
+    const offset = req.query.offset || 0;
+    const size = req.query.size || 50;
+
+    const response = await antMediaRequest(`/${appName}/rest/v2/vods/list/${offset}/${size}`);
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      return res.status(response.status).json({ error: errorText });
+    }
+
+    const data = await response.json();
+    res.json({ success: true, count: data.length, vods: data });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Get server stats
+app.get('/api/antmedia/stats', async (req, res) => {
+  try {
+    const appName = req.query.app || DEFAULT_APP;
+
+    const [broadcastsRes, vodsRes] = await Promise.all([
+      antMediaRequest(`/${appName}/rest/v2/broadcasts/list/0/1000`),
+      antMediaRequest(`/${appName}/rest/v2/vods/list/0/1000`)
+    ]);
+
+    const broadcasts = broadcastsRes.ok ? await broadcastsRes.json() : [];
+    const vods = vodsRes.ok ? await vodsRes.json() : [];
+
+    res.json({
+      success: true,
+      stats: {
+        totalBroadcasts: broadcasts.length,
+        totalVods: vods.length,
+        liveBroadcasts: broadcasts.filter(b => b.status === 'broadcasting').length
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Upload MP4 to Ant Media Server (VoD) - Copy to shared streams folder
+app.post('/api/antmedia/upload', upload.single('file'), async (req, res) => {
   try {
     if (!req.file) {
-      return res.status(400).json({ error: 'No file uploaded' });
+      return res.status(400).json({ error: 'No file uploaded. Use field name "file"' });
     }
 
     const filePath = req.file.path;
-    const fileName = req.file.filename;
-    const appName = req.body.appName || 'Media'; // Default app name in Ant Media
-    const token = '1r3wwsJbmBk7N7vY2wTQSNRaeKQK9rnL';
+    const originalName = req.file.originalname;
+    const appName = req.body.app || DEFAULT_APP;
+    const videoName = req.body.name || originalName.replace('.mp4', '');
 
-    console.log(`📹 Uploading ${fileName} to Ant Media...`);
+    // Generate unique stream ID
+    const streamId = `vod_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+    const targetFileName = `${streamId}.mp4`;
 
-    // Create form data for Ant Media API
-    const form = new FormData();
-    form.append('file', fs.createReadStream(filePath));
+    console.log(`📹 Uploading ${originalName} as ${targetFileName} to Ant Media (${appName})...`);
 
-    // Upload to Ant Media Server's REST API
-    const uploadResponse = await fetch(
-      `http://antmedia:5080/rest/v2/broadcasts/upload?appName=${appName}`,
-      {
-        method: 'POST',
-        body: form,
-        headers: {
-          ...form.getHeaders(),
-          'ProxyAuthorization': token
-        }
-      }
-    );
+    // Copy file to Ant Media streams folder (shared volume)
+    const streamsPath = process.env.ANTMEDIA_STREAMS_PATH || '/antmedia-streams';
+    const targetPath = path.join(streamsPath, targetFileName);
 
-    if (!uploadResponse.ok) {
-      const errorText = await uploadResponse.text();
-      console.error('Ant Media error:', errorText);
-      fs.unlinkSync(filePath); // Clean up
-      return res.status(uploadResponse.status).json({
-        error: 'Failed to upload to Ant Media',
-        details: errorText
-      });
+    // Ensure streams directory exists
+    if (!fs.existsSync(streamsPath)) {
+      fs.mkdirSync(streamsPath, { recursive: true });
     }
 
-    const result = await uploadResponse.json();
+    // Copy file to streams folder
+    fs.copyFileSync(filePath, targetPath);
+    console.log(`✅ File copied to ${targetPath}`);
 
-    // Clean up the temporary file
+    // Clean up temp file
     fs.unlinkSync(filePath);
 
-    // Save upload metadata to Redis
+    // Create VoD entry via API
+    const token = generateAntMediaToken();
+    let vodCreated = false;
+    let apiResult = null;
+
+    if (token) {
+      try {
+        const createResponse = await fetch(
+          `${ANT_MEDIA_URL}/${appName}/rest/v2/broadcasts/create`,
+          {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              streamId: streamId,
+              name: videoName,
+              type: 'vodFile'
+            })
+          }
+        );
+
+        if (createResponse.ok) {
+          apiResult = await createResponse.json();
+          vodCreated = true;
+          console.log(`✅ VoD entry created:`, apiResult.streamId);
+        }
+      } catch (e) {
+        console.log('⚠️ Could not create VoD entry via API:', e.message);
+      }
+    }
+
     const uploadedVideo = {
-      id: result.streamId || `video_${Date.now()}`,
-      name: req.body.name || fileName,
-      fileName,
+      id: streamId,
+      streamId: streamId,
+      name: videoName,
+      originalName,
       appName,
       uploadedAt: new Date().toISOString(),
       size: req.file.size,
-      antmediaId: result.streamId,
+      sizeFormatted: (req.file.size / 1024 / 1024).toFixed(2) + ' MB',
+      vodCreated,
       status: 'uploaded'
     };
 
     // Store in Redis
     if (redisClient?.isOpen) {
       await redisClient.lPush('uploaded_videos', JSON.stringify(uploadedVideo));
-      await redisClient.expire('uploaded_videos', 86400 * 7); // Keep for 7 days
     }
 
     res.json({
       success: true,
       message: 'Video uploaded successfully',
       video: uploadedVideo,
-      antmediaResponse: result
+      playUrl: `http://localhost:5080/${appName}/streams/${streamId}.mp4`,
+      embedUrl: `http://localhost:5080/${appName}/play.html?id=${streamId}`,
+      apiResult
     });
   } catch (err) {
-    // Clean up on error
+    console.error('Upload error:', err);
     if (req.file && fs.existsSync(req.file.path)) {
       fs.unlinkSync(req.file.path);
     }
     res.status(500).json({ error: err.message });
   }
+});
+
+// Legacy video upload (new upload system at /upload via routes)
+app.get('/upload/video-legacy', (req, res) => {
+  res.render('upload', { layout: false });
 });
 
 // Get uploaded videos list
@@ -594,7 +835,9 @@ app.get('/broadcasts', async (req, res) => {
 
 // Start server
 async function startServer() {
-  await initDatabase();
+  // Initialize databases from config
+  await initLmsDatabase();
+  await initTescoDatabase();
   await initRedis();
 
   app.listen(port, () => {
@@ -604,13 +847,12 @@ async function startServer() {
     console.log(`   - Redis: ${process.env.REDIS_HOST}:${process.env.REDIS_PORT}`);
     console.log(`   - Ant Media: http://antmedia:5080`);
     console.log(`\n🔗 Available endpoints:`);
-    console.log(`   - GET / - Hello World`);
-    console.log(`   - GET /health - Health check`);
-    console.log(`   - GET /test/db - Test database`);
-    console.log(`   - GET /test/redis - Test Redis`);
-    console.log(`   - GET /test/antmedia - Test Ant Media Server`);
-    console.log(`   - POST /upload/mp4 - Upload MP4 to Ant Media (multipart/form-data with 'video' field)`);
-    console.log(`   - GET /antmedia/broadcasts - List all broadcasts`);
+    console.log(`   - Dashboard: /dashboard`);
+    console.log(`   - Settings: /settings/format, /settings/functions, /settings/department`);
+    console.log(`\n📁 MVC Structure:`);
+    console.log(`   - Models: /app/models/`);
+    console.log(`   - Controllers: /app/controllers/`);
+    console.log(`   - Routes: /app/routes/`);
   });
 }
 

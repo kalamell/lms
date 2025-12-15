@@ -1,0 +1,127 @@
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="/dashboard">Dashboard</a></li>
+    <li class="breadcrumb-item"><a href="/user">Users</a></li>
+    <li class="breadcrumb-item"><a href="/user/<%= user.id %>"><%= user.employee_id || 'User' %></a></li>
+    <li class="breadcrumb-item active">Edit</li>
+  </ol>
+</nav>
+
+<form method="post" action="/user/<%= user.id %>/edit">
+  <div class="row">
+    <!-- Main Content -->
+    <div class="col-lg-8">
+      <div class="card mb-4">
+        <div class="card-header">
+          <h5 class="card-title mb-0">
+            <i class="ri ri-user-settings-line me-2"></i>Edit User
+          </h5>
+        </div>
+        <div class="card-body">
+          <!-- Employee ID (readonly) -->
+          <div class="mb-4">
+            <label class="form-label">Employee ID</label>
+            <input type="text" class="form-control" value="<%= user.employee_id || '-' %>" disabled>
+          </div>
+
+          <div class="row">
+            <div class="col-md-6 mb-4">
+              <label class="form-label" for="first_name">First Name</label>
+              <input type="text" class="form-control" id="first_name" name="first_name"
+                     value="<%= user.first_name || '' %>" placeholder="First name">
+            </div>
+            <div class="col-md-6 mb-4">
+              <label class="form-label" for="last_name">Last Name</label>
+              <input type="text" class="form-control" id="last_name" name="last_name"
+                     value="<%= user.last_name || '' %>" placeholder="Last name">
+            </div>
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label" for="name_thai">Thai Name</label>
+            <input type="text" class="form-control" id="name_thai" name="name_thai"
+                   value="<%= user.name_thai || '' %>" placeholder="Thai name">
+          </div>
+
+          <div class="row">
+            <div class="col-md-6 mb-4">
+              <label class="form-label" for="email">Email</label>
+              <input type="email" class="form-control" id="email" name="email"
+                     value="<%= user.email || '' %>" placeholder="Email address">
+            </div>
+            <div class="col-md-6 mb-4">
+              <label class="form-label" for="phone">Phone</label>
+              <input type="text" class="form-control" id="phone" name="phone"
+                     value="<%= user.phone || '' %>" placeholder="Phone number">
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-6 mb-4">
+              <label class="form-label" for="position">Position</label>
+              <input type="text" class="form-control" id="position" name="position"
+                     value="<%= user.position || '' %>" placeholder="Position">
+            </div>
+            <div class="col-md-6 mb-4">
+              <label class="form-label" for="department">Department</label>
+              <input type="text" class="form-control" id="department" name="department"
+                     value="<%= user.department || '' %>" placeholder="Department">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="col-lg-4">
+      <!-- Status & Type -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <h5 class="card-title mb-0"><i class="ri ri-settings-3-line me-2"></i>Settings</h5>
+        </div>
+        <div class="card-body">
+          <div class="mb-4">
+            <label class="form-label" for="type">User Type</label>
+            <select class="form-select" id="type" name="type">
+              <option value="1" <%= user.type == 1 ? 'selected' : '' %>>User</option>
+              <option value="2" <%= user.type == 2 ? 'selected' : '' %>>Admin</option>
+              <option value="3" <%= user.type == 3 ? 'selected' : '' %>>Super Admin</option>
+            </select>
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label" for="status">Status</label>
+            <select class="form-select" id="status" name="status">
+              <option value="1" <%= user.status == 1 ? 'selected' : '' %>>Active</option>
+              <option value="0" <%= user.status == 0 ? 'selected' : '' %>>Inactive</option>
+            </select>
+          </div>
+
+          <div class="form-check form-switch mb-3">
+            <input class="form-check-input" type="checkbox" id="is_inactive" name="is_inactive" value="1"
+                   <%= user.is_inactive ? 'checked' : '' %>>
+            <label class="form-check-label" for="is_inactive">Mark as Inactive</label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="card">
+        <div class="card-header">
+          <h5 class="card-title mb-0"><i class="ri ri-save-line me-2"></i>Actions</h5>
+        </div>
+        <div class="card-body">
+          <div class="d-grid gap-2">
+            <button type="submit" class="btn btn-primary">
+              <i class="ri ri-save-line me-1"></i>Save Changes
+            </button>
+            <a href="/user/<%= user.id %>" class="btn btn-outline-secondary">
+              <i class="ri ri-arrow-left-line me-1"></i>Cancel
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</form>

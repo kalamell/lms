@@ -1,0 +1,27 @@
+<!-- Email Settings -->
+<div class="card mb-4">
+  <div class="card-header">
+    <h5 class="card-title mb-0"><i class="icon-base ri ri-mail-line me-2"></i>การส่งอีเมล์</h5>
+  </div>
+  <div class="card-body">
+    <div class="row mb-4">
+      <div class="col-md-6">
+        <label class="form-label">ส่งอีเมล์เมื่อเรียนจบ</label>
+        <select class="form-select" name="sendemail">
+          <option value="0" <%= course?.sendemail != 1 ? 'selected' : '' %>>ปิด</option>
+          <option value="1" <%= course?.sendemail == 1 ? 'selected' : '' %>>เปิด</option>
+        </select>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">ลิ้งค์แบบประเมิน</label>
+        <input type="text" class="form-control" name="evaluate_link"
+               value="<%= course?.evaluate_link || '' %>" placeholder="URL แบบประเมิน">
+      </div>
+    </div>
+    <div class="mb-0">
+      <label class="form-label">Email Template</label>
+      <div id="email_template-editor" class="quill-editor"><%- course?.email_template || '' %></div>
+      <input type="hidden" id="email_template" name="email_template">
+    </div>
+  </div>
+</div>

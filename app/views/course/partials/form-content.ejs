@@ -1,0 +1,34 @@
+<!-- Course Description -->
+<div class="card mb-4">
+  <div class="card-header">
+    <h5 class="card-title mb-0"><i class="icon-base ri ri-file-text-line me-2"></i>รายละเอียดหลักสูตร</h5>
+  </div>
+  <div class="card-body">
+    <link rel="stylesheet" href="/theme/assets/vendor/libs/quill/typography.css" />
+    <link rel="stylesheet" href="/theme/assets/vendor/libs/quill/editor.css" />
+
+    <div class="mb-4">
+      <label class="form-label">วัตถุประสงค์ของหลักสูตร (Description)</label>
+      <div id="description-editor" class="quill-editor"><%- course?.description || '' %></div>
+      <input type="hidden" id="description" name="description">
+    </div>
+
+    <div class="mb-4">
+      <label class="form-label">หัวข้อและเนื้อหาวิชา (TOC)</label>
+      <div id="toc-editor" class="quill-editor"><%- course?.toc || '' %></div>
+      <input type="hidden" id="toc" name="toc">
+    </div>
+
+    <div class="mb-4">
+      <label class="form-label">คำแนะนำ (How to)</label>
+      <div id="howto-editor" class="quill-editor"><%- course?.howto || '' %></div>
+      <input type="hidden" id="howto" name="howto">
+    </div>
+
+    <div class="mb-0">
+      <label class="form-label">กลุ่มเป้าหมาย (Target Learner)</label>
+      <div id="targetlearner-editor" class="quill-editor"><%- course?.targetlearner || '' %></div>
+      <input type="hidden" id="targetlearner" name="targetlearner">
+    </div>
+  </div>
+</div>

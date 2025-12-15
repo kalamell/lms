@@ -1,0 +1,729 @@
+<!-- Load Dropzone CSS -->
+<link rel="stylesheet" href="/theme/assets/vendor/libs/dropzone/dropzone.css" />
+
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="/dashboard">Dashboard</a></li>
+    <li class="breadcrumb-item active">File Upload</li>
+  </ol>
+</nav>
+
+<div class="row">
+  <!-- Upload Section -->
+  <div class="col-12">
+    <div class="card mb-4">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="card-title mb-0">
+          <i class="ri ri-upload-cloud-2-line me-2"></i>Upload Files
+        </h5>
+        <div class="btn-group" role="group">
+          <input type="radio" class="btn-check" name="uploadType" id="uploadAll" value="all" checked>
+          <label class="btn btn-outline-primary btn-sm" for="uploadAll">ทั้งหมด</label>
+
+          <input type="radio" class="btn-check" name="uploadType" id="uploadImage" value="image">
+          <label class="btn btn-outline-primary btn-sm" for="uploadImage">รูปภาพ</label>
+
+          <input type="radio" class="btn-check" name="uploadType" id="uploadVideo" value="video">
+          <label class="btn btn-outline-primary btn-sm" for="uploadVideo">วิดีโอ</label>
+
+          <input type="radio" class="btn-check" name="uploadType" id="uploadDoc" value="document">
+          <label class="btn btn-outline-primary btn-sm" for="uploadDoc">เอกสาร</label>
+        </div>
+      </div>
+      <div class="card-body">
+        <!-- Dropzone -->
+        <div class="dropzone needsclick" id="dropzone-upload">
+          <div class="dz-message needsclick">
+            <div class="upload-icon-wrapper mb-3">
+              <i class="ri ri-upload-cloud-2-line" style="font-size: 4rem; color: var(--bs-primary);"></i>
+            </div>
+            <h4 class="mb-2">ลากไฟล์มาวางที่นี่ หรือคลิกเพื่อเลือกไฟล์</h4>
+            <p class="text-muted mb-0" id="acceptedFilesText">
+              รองรับ: รูปภาพ (JPG, PNG, GIF), วิดีโอ (MP4, WebM), เอกสาร (PDF, DOC, XLS, PPT)
+            </p>
+            <p class="text-muted small">ขนาดสูงสุด: 500MB สำหรับวิดีโอ, 50MB สำหรับไฟล์อื่น</p>
+          </div>
+        </div>
+
+        <!-- Upload Progress -->
+        <div id="uploadProgress" class="mt-4" style="display: none;">
+          <div class="d-flex justify-content-between mb-2">
+            <span id="uploadFileName">Uploading...</span>
+            <span id="uploadPercent">0%</span>
+          </div>
+          <div class="progress">
+            <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar"
+                 style="width: 0%" id="uploadProgressBar"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Uploaded Files -->
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="card-title mb-0">
+          <i class="ri ri-folder-3-line me-2"></i>ไฟล์ที่อัพโหลด
+        </h5>
+        <div class="d-flex gap-2">
+          <select class="form-select form-select-sm" id="filterCategory" style="width: 150px;">
+            <option value="all">ทั้งหมด</option>
+            <option value="images">รูปภาพ</option>
+            <option value="videos">วิดีโอ</option>
+            <option value="documents">เอกสาร</option>
+          </select>
+          <button class="btn btn-outline-secondary btn-sm" id="btnRefresh" title="รีเฟรช">
+            <i class="ri ri-refresh-line"></i>
+          </button>
+          <div class="btn-group btn-group-sm" role="group">
+            <button class="btn btn-outline-secondary active" id="viewGrid" title="แบบกริด">
+              <i class="ri ri-grid-fill"></i>
+            </button>
+            <button class="btn btn-outline-secondary" id="viewList" title="แบบรายการ">
+              <i class="ri ri-list-check"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div id="filesList" class="row g-3">
+          <div class="col-12 text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Loading...</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pagination -->
+        <div id="pagination" class="d-flex justify-content-between align-items-center mt-4" style="display: none !important;">
+          <div class="text-muted small" id="paginationInfo"></div>
+          <nav>
+            <ul class="pagination pagination-sm mb-0" id="paginationNav"></ul>
+          </nav>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- File Preview Modal -->
+<div class="modal fade" id="previewModal" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="previewFileName">Preview</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body text-center" id="previewContent">
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">ปิด</button>
+        <a href="#" class="btn btn-primary" id="previewDownload" download>
+          <i class="ri ri-download-line me-1"></i>ดาวน์โหลด
+        </a>
+        <button type="button" class="btn btn-outline-primary" id="previewCopyUrl">
+          <i class="ri ri-file-copy-line me-1"></i>คัดลอก URL
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+/* Dropzone Styling */
+.dropzone {
+  border: 2px dashed var(--bs-border-color);
+  border-radius: 0.5rem;
+  background: var(--bs-body-bg);
+  min-height: 250px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.dropzone:hover,
+.dropzone.dz-drag-hover {
+  border-color: var(--bs-primary);
+  background: rgba(var(--bs-primary-rgb), 0.05);
+}
+
+.dropzone .dz-message {
+  text-align: center;
+  margin: 0;
+}
+
+.dropzone .dz-preview {
+  margin: 10px;
+}
+
+/* File Card */
+.file-card {
+  border: 1px solid var(--bs-border-color);
+  border-radius: 0.5rem;
+  overflow: hidden;
+  transition: all 0.2s ease;
+  height: 100%;
+}
+
+.file-card:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  transform: translateY(-2px);
+}
+
+.file-card .file-preview {
+  height: 140px;
+  background: var(--bs-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.file-card .file-preview img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: cover;
+}
+
+.file-card .file-preview video {
+  max-width: 100%;
+  max-height: 100%;
+}
+
+.file-card .file-preview .file-icon {
+  font-size: 3rem;
+}
+
+.file-card .file-preview .file-icon.pdf { color: #e74c3c; }
+.file-card .file-preview .file-icon.doc { color: #3498db; }
+.file-card .file-preview .file-icon.xls { color: #27ae60; }
+.file-card .file-preview .file-icon.ppt { color: #e67e22; }
+.file-card .file-preview .file-icon.video { color: #9b59b6; }
+
+.file-card .file-info {
+  padding: 0.75rem;
+}
+
+.file-card .file-name {
+  font-weight: 500;
+  font-size: 0.875rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 0.25rem;
+}
+
+.file-card .file-meta {
+  font-size: 0.75rem;
+  color: var(--bs-secondary-color);
+}
+
+.file-card .file-actions {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.file-card:hover .file-actions {
+  opacity: 1;
+}
+
+.file-card .btn-action {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: white;
+  border: 1px solid var(--bs-border-color);
+  margin-left: 4px;
+}
+
+.file-card .btn-action:hover {
+  background: var(--bs-light);
+}
+
+.file-card .btn-action.btn-delete:hover {
+  background: var(--bs-danger);
+  color: white;
+  border-color: var(--bs-danger);
+}
+
+/* List View */
+.file-list-item {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem;
+  border: 1px solid var(--bs-border-color);
+  border-radius: 0.375rem;
+  margin-bottom: 0.5rem;
+  transition: background 0.2s;
+}
+
+.file-list-item:hover {
+  background: var(--bs-light);
+}
+
+.file-list-item .file-icon-sm {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bs-light);
+  border-radius: 0.375rem;
+  margin-right: 1rem;
+  font-size: 1.25rem;
+}
+
+.file-list-item .file-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.file-list-item .file-name {
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.file-list-item .file-meta {
+  font-size: 0.75rem;
+  color: var(--bs-secondary-color);
+}
+
+/* Empty State */
+.empty-state {
+  text-align: center;
+  padding: 3rem;
+  color: var(--bs-secondary-color);
+}
+
+.empty-state i {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+  opacity: 0.5;
+}
+</style>
+
+<!-- Load Dropzone Library -->
+<script src="/theme/assets/vendor/libs/dropzone/dropzone.js"></script>
+
+<script>
+// ============================================
+// Dropzone Configuration
+// ============================================
+document.addEventListener('DOMContentLoaded', function() {
+
+Dropzone.autoDiscover = false;
+
+const previewTemplate = `
+<div class="dz-preview dz-file-preview">
+  <div class="dz-details">
+    <div class="dz-thumbnail">
+      <img data-dz-thumbnail>
+      <span class="dz-nopreview">No preview</span>
+      <div class="dz-success-mark"></div>
+      <div class="dz-error-mark"></div>
+      <div class="dz-error-message"><span data-dz-errormessage></span></div>
+      <div class="progress bg-label-primary">
+        <div class="progress-bar progress-bar-primary" role="progressbar" data-dz-uploadprogress></div>
+      </div>
+    </div>
+    <div class="dz-filename" data-dz-name></div>
+    <div class="dz-size" data-dz-size></div>
+  </div>
+</div>`;
+
+let currentAccept = null;
+let currentView = 'grid';
+let currentCategory = 'all';
+let currentPage = 1;
+
+// Initialize Dropzone
+const dropzone = new Dropzone('#dropzone-upload', {
+  url: '/upload/file',
+  paramName: 'file',
+  maxFilesize: 500, // 500MB
+  acceptedFiles: null, // Will be set dynamically
+  previewTemplate: previewTemplate,
+  parallelUploads: 2,
+  addRemoveLinks: true,
+  dictRemoveFile: 'ลบ',
+
+  init: function() {
+    this.on('success', function(file, response) {
+      if (response.success) {
+        showToast('success', 'อัพโหลดสำเร็จ', file.name);
+        loadFiles();
+      }
+    });
+
+    this.on('error', function(file, errorMessage) {
+      showToast('error', 'อัพโหลดล้มเหลว', typeof errorMessage === 'string' ? errorMessage : errorMessage.error);
+    });
+
+    this.on('queuecomplete', function() {
+      setTimeout(() => {
+        this.removeAllFiles();
+      }, 2000);
+    });
+  }
+});
+
+// Update accepted files based on selection
+document.querySelectorAll('input[name="uploadType"]').forEach(radio => {
+  radio.addEventListener('change', function() {
+    const type = this.value;
+    let accept = null;
+    let text = '';
+
+    switch(type) {
+      case 'image':
+        accept = 'image/*,.jpg,.jpeg,.png,.gif,.webp';
+        text = 'รองรับ: JPG, PNG, GIF, WebP (สูงสุด 50MB)';
+        break;
+      case 'video':
+        accept = 'video/*,.mp4,.webm,.mov';
+        text = 'รองรับ: MP4, WebM, MOV (สูงสุด 500MB)';
+        break;
+      case 'document':
+        accept = '.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv';
+        text = 'รองรับ: PDF, DOC, XLS, PPT, TXT, CSV (สูงสุด 50MB)';
+        break;
+      default:
+        accept = null;
+        text = 'รองรับ: รูปภาพ (JPG, PNG, GIF), วิดีโอ (MP4, WebM), เอกสาร (PDF, DOC, XLS, PPT)';
+    }
+
+    dropzone.options.acceptedFiles = accept;
+    document.getElementById('acceptedFilesText').textContent = text;
+  });
+});
+
+// ============================================
+// File List Functions
+// ============================================
+async function loadFiles() {
+  const container = document.getElementById('filesList');
+  container.innerHTML = `
+    <div class="col-12 text-center py-5">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+    </div>
+  `;
+
+  try {
+    const response = await fetch(`/upload/files?category=${currentCategory}&page=${currentPage}&limit=24`);
+    const data = await response.json();
+
+    if (data.success && data.files.length > 0) {
+      renderFiles(data.files);
+      renderPagination(data.pagination);
+    } else {
+      container.innerHTML = `
+        <div class="col-12">
+          <div class="empty-state">
+            <i class="ri ri-folder-open-line"></i>
+            <h5>ยังไม่มีไฟล์</h5>
+            <p>อัพโหลดไฟล์แรกของคุณด้านบน</p>
+          </div>
+        </div>
+      `;
+    }
+  } catch (error) {
+    console.error('Load files error:', error);
+    container.innerHTML = `
+      <div class="col-12">
+        <div class="alert alert-danger">เกิดข้อผิดพลาดในการโหลดไฟล์</div>
+      </div>
+    `;
+  }
+}
+
+function renderFiles(files) {
+  const container = document.getElementById('filesList');
+
+  if (currentView === 'grid') {
+    container.innerHTML = files.map(file => renderFileCard(file)).join('');
+  } else {
+    container.innerHTML = `<div class="col-12">${files.map(file => renderFileListItem(file)).join('')}</div>`;
+  }
+}
+
+function renderFileCard(file) {
+  const preview = getFilePreview(file);
+  const icon = getFileIcon(file);
+
+  return `
+    <div class="col-6 col-md-4 col-lg-3 col-xl-2">
+      <div class="file-card">
+        <div class="file-preview">
+          ${preview}
+          <div class="file-actions">
+            <button class="btn-action" onclick="previewFile('${encodeURIComponent(JSON.stringify(file))}')" title="ดูตัวอย่าง">
+              <i class="ri ri-eye-line"></i>
+            </button>
+            <button class="btn-action btn-delete" onclick="deleteFile('${file.path}')" title="ลบ">
+              <i class="ri ri-delete-bin-line"></i>
+            </button>
+          </div>
+        </div>
+        <div class="file-info">
+          <div class="file-name" title="${file.filename}">${file.filename}</div>
+          <div class="file-meta">
+            <span>${file.sizeFormatted}</span>
+            <span class="mx-1">•</span>
+            <span>${formatDate(file.uploadedAt)}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderFileListItem(file) {
+  const icon = getFileIcon(file);
+
+  return `
+    <div class="file-list-item">
+      <div class="file-icon-sm ${icon.class}">
+        <i class="${icon.icon}"></i>
+      </div>
+      <div class="file-details">
+        <div class="file-name" title="${file.filename}">${file.filename}</div>
+        <div class="file-meta">
+          ${file.sizeFormatted} • ${formatDate(file.uploadedAt)} • ${file.category}
+        </div>
+      </div>
+      <div class="file-actions-inline">
+        <button class="btn btn-sm btn-outline-secondary me-1" onclick="previewFile('${encodeURIComponent(JSON.stringify(file))}')" title="ดูตัวอย่าง">
+          <i class="ri ri-eye-line"></i>
+        </button>
+        <a href="${file.url}" class="btn btn-sm btn-outline-secondary me-1" download title="ดาวน์โหลด">
+          <i class="ri ri-download-line"></i>
+        </a>
+        <button class="btn btn-sm btn-outline-danger" onclick="deleteFile('${file.path}')" title="ลบ">
+          <i class="ri ri-delete-bin-line"></i>
+        </button>
+      </div>
+    </div>
+  `;
+}
+
+function getFilePreview(file) {
+  const ext = file.extension?.toLowerCase();
+  const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(ext);
+  const isVideo = ['mp4', 'webm', 'mov'].includes(ext);
+
+  if (isImage) {
+    return `<img src="${file.url}" alt="${file.filename}" loading="lazy">`;
+  } else if (isVideo) {
+    return `<video src="${file.url}" muted></video>`;
+  } else {
+    const icon = getFileIcon(file);
+    return `<i class="file-icon ${icon.class} ${icon.icon}"></i>`;
+  }
+}
+
+function getFileIcon(file) {
+  const ext = file.extension?.toLowerCase();
+  const icons = {
+    pdf: { icon: 'ri ri-file-pdf-2-fill', class: 'pdf' },
+    doc: { icon: 'ri ri-file-word-2-fill', class: 'doc' },
+    docx: { icon: 'ri ri-file-word-2-fill', class: 'doc' },
+    xls: { icon: 'ri ri-file-excel-2-fill', class: 'xls' },
+    xlsx: { icon: 'ri ri-file-excel-2-fill', class: 'xls' },
+    ppt: { icon: 'ri ri-file-ppt-2-fill', class: 'ppt' },
+    pptx: { icon: 'ri ri-file-ppt-2-fill', class: 'ppt' },
+    mp4: { icon: 'ri ri-video-fill', class: 'video' },
+    webm: { icon: 'ri ri-video-fill', class: 'video' },
+    mov: { icon: 'ri ri-video-fill', class: 'video' },
+    txt: { icon: 'ri ri-file-text-fill', class: 'doc' },
+    csv: { icon: 'ri ri-file-list-3-fill', class: 'xls' }
+  };
+
+  return icons[ext] || { icon: 'ri ri-file-fill', class: '' };
+}
+
+function renderPagination(pagination) {
+  const paginationEl = document.getElementById('pagination');
+  const infoEl = document.getElementById('paginationInfo');
+  const navEl = document.getElementById('paginationNav');
+
+  if (pagination.totalPages <= 1) {
+    paginationEl.style.display = 'none';
+    return;
+  }
+
+  paginationEl.style.display = 'flex';
+  infoEl.textContent = `แสดง ${(pagination.page - 1) * pagination.limit + 1} - ${Math.min(pagination.page * pagination.limit, pagination.total)} จาก ${pagination.total} ไฟล์`;
+
+  let navHtml = '';
+
+  // Previous
+  navHtml += `
+    <li class="page-item ${pagination.page === 1 ? 'disabled' : ''}">
+      <a class="page-link" href="#" onclick="goToPage(${pagination.page - 1}); return false;">
+        <i class="ri ri-arrow-left-s-line"></i>
+      </a>
+    </li>
+  `;
+
+  // Pages
+  for (let i = 1; i <= pagination.totalPages; i++) {
+    if (i === 1 || i === pagination.totalPages || (i >= pagination.page - 2 && i <= pagination.page + 2)) {
+      navHtml += `
+        <li class="page-item ${i === pagination.page ? 'active' : ''}">
+          <a class="page-link" href="#" onclick="goToPage(${i}); return false;">${i}</a>
+        </li>
+      `;
+    } else if (i === pagination.page - 3 || i === pagination.page + 3) {
+      navHtml += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+    }
+  }
+
+  // Next
+  navHtml += `
+    <li class="page-item ${pagination.page === pagination.totalPages ? 'disabled' : ''}">
+      <a class="page-link" href="#" onclick="goToPage(${pagination.page + 1}); return false;">
+        <i class="ri ri-arrow-right-s-line"></i>
+      </a>
+    </li>
+  `;
+
+  navEl.innerHTML = navHtml;
+}
+
+function goToPage(page) {
+  currentPage = page;
+  loadFiles();
+}
+
+// ============================================
+// File Actions
+// ============================================
+function previewFile(fileJson) {
+  const file = JSON.parse(decodeURIComponent(fileJson));
+  const modal = new bootstrap.Modal(document.getElementById('previewModal'));
+  const contentEl = document.getElementById('previewContent');
+  const downloadEl = document.getElementById('previewDownload');
+
+  document.getElementById('previewFileName').textContent = file.filename;
+  downloadEl.href = file.url;
+
+  const ext = file.extension?.toLowerCase();
+  const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(ext);
+  const isVideo = ['mp4', 'webm', 'mov'].includes(ext);
+  const isPdf = ext === 'pdf';
+
+  if (isImage) {
+    contentEl.innerHTML = `<img src="${file.url}" class="img-fluid" style="max-height: 70vh;">`;
+  } else if (isVideo) {
+    contentEl.innerHTML = `<video src="${file.url}" controls class="w-100" style="max-height: 70vh;"></video>`;
+  } else if (isPdf) {
+    contentEl.innerHTML = `<iframe src="${file.url}" style="width: 100%; height: 70vh; border: none;"></iframe>`;
+  } else {
+    const icon = getFileIcon(file);
+    contentEl.innerHTML = `
+      <div class="py-5">
+        <i class="${icon.icon}" style="font-size: 5rem; color: var(--bs-secondary);"></i>
+        <h5 class="mt-3">${file.filename}</h5>
+        <p class="text-muted">${file.sizeFormatted}</p>
+        <p class="text-muted small">ไม่สามารถแสดงตัวอย่างไฟล์ประเภทนี้ได้</p>
+      </div>
+    `;
+  }
+
+  // Copy URL button
+  document.getElementById('previewCopyUrl').onclick = function() {
+    const url = window.location.origin + file.url;
+    navigator.clipboard.writeText(url).then(() => {
+      showToast('success', 'คัดลอก URL แล้ว', url);
+    });
+  };
+
+  modal.show();
+}
+
+async function deleteFile(filePath) {
+  if (!confirm('ต้องการลบไฟล์นี้หรือไม่?')) return;
+
+  try {
+    const response = await fetch('/upload/file', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ path: filePath })
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      showToast('success', 'ลบไฟล์สำเร็จ');
+      loadFiles();
+    } else {
+      showToast('error', 'ลบไฟล์ล้มเหลว', data.error);
+    }
+  } catch (error) {
+    showToast('error', 'เกิดข้อผิดพลาด', error.message);
+  }
+}
+
+// ============================================
+// Helpers
+// ============================================
+function formatDate(dateString) {
+  const date = new Date(dateString);
+  return date.toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' });
+}
+
+function showToast(type, title, message = '') {
+  // Simple alert for now, can be replaced with toast library
+  if (type === 'error') {
+    alert(`${title}\n${message}`);
+  } else {
+    console.log(`${title}: ${message}`);
+  }
+}
+
+// ============================================
+// Event Listeners
+// ============================================
+document.getElementById('filterCategory').addEventListener('change', function() {
+  currentCategory = this.value;
+  currentPage = 1;
+  loadFiles();
+});
+
+document.getElementById('btnRefresh').addEventListener('click', loadFiles);
+
+document.getElementById('viewGrid').addEventListener('click', function() {
+  currentView = 'grid';
+  this.classList.add('active');
+  document.getElementById('viewList').classList.remove('active');
+  loadFiles();
+});
+
+document.getElementById('viewList').addEventListener('click', function() {
+  currentView = 'list';
+  this.classList.add('active');
+  document.getElementById('viewGrid').classList.remove('active');
+  loadFiles();
+});
+
+// Initial load
+loadFiles();
+
+}); // End DOMContentLoaded
+</script>

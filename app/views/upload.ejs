@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Upload Video - LMS</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Sarabun', sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 40px 20px; }
+    .container { max-width: 600px; margin: 0 auto; }
+    .card { background: white; border-radius: 16px; padding: 32px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+    h1 { font-size: 28px; margin-bottom: 8px; }
+    .subtitle { color: #666; margin-bottom: 24px; }
+    .form-group { margin-bottom: 20px; }
+    label { display: block; font-weight: 500; margin-bottom: 8px; }
+    input[type="text"], select { width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 16px; }
+    .file-upload { border: 2px dashed #ccc; border-radius: 12px; padding: 40px; text-align: center; cursor: pointer; background: #fafafa; }
+    .file-upload:hover { border-color: #667eea; background: #f0f0ff; }
+    .file-upload.dragover { border-color: #667eea; background: #e8e8ff; }
+    input[type="file"] { display: none; }
+    .btn { width: 100%; padding: 14px; background: linear-gradient(135deg, #667eea, #764ba2); color: white; border: none; border-radius: 8px; font-size: 18px; font-weight: 600; cursor: pointer; }
+    .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(102,126,234,0.4); }
+    .btn:disabled { background: #ccc; cursor: not-allowed; transform: none; }
+    .progress { display: none; margin-top: 20px; }
+    .progress-bar { height: 8px; background: #e0e0e0; border-radius: 4px; overflow: hidden; }
+    .progress-fill { height: 100%; background: linear-gradient(90deg, #667eea, #764ba2); width: 0%; transition: width 0.3s; }
+    .progress-text { text-align: center; margin-top: 8px; color: #666; }
+    .result { margin-top: 24px; padding: 16px; border-radius: 8px; display: none; }
+    .result.success { background: #d4edda; color: #155724; }
+    .result.error { background: #f8d7da; color: #721c24; }
+    .result pre { margin-top: 12px; padding: 12px; background: rgba(0,0,0,0.05); border-radius: 4px; overflow-x: auto; font-size: 12px; white-space: pre-wrap; }
+    .back-link { display: block; text-align: center; margin-top: 20px; color: white; text-decoration: none; }
+    .video-list { margin-top: 24px; }
+    .video-item { background: #f8f9fa; padding: 12px; border-radius: 8px; margin-bottom: 8px; }
+    .video-item a { color: #667eea; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <h1>Upload Video</h1>
+      <p class="subtitle">Upload MP4 to Ant Media Server (LiveApp)</p>
+      <form id="uploadForm">
+        <div class="form-group">
+          <label>Video Name</label>
+          <input type="text" id="name" placeholder="Optional">
+        </div>
+        <div class="form-group">
+          <label>Application</label>
+          <select id="app">
+            <option value="LiveApp" selected>LiveApp</option>
+            <option value="WebRTCAppEE">WebRTCAppEE</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Video File (MP4)</label>
+          <div class="file-upload" id="dropZone">
+            <p>Drag & drop MP4 file here or click to browse</p>
+            <p id="fileName" style="color:#667eea;font-weight:500;margin-top:8px;"></p>
+          </div>
+          <input type="file" id="file" accept="video/mp4,.mp4">
+        </div>
+        <button type="submit" class="btn" id="submitBtn">Upload Video</button>
+        <div class="progress" id="progress">
+          <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+          <p class="progress-text" id="progressText">Uploading... 0%</p>
+        </div>
+        <div class="result" id="result"></div>
+      </form>
+      <div class="video-list" id="videoList"></div>
+    </div>
+    <a href="/dashboard" class="back-link">Back to Dashboard</a>
+  </div>
+  <script>
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('file');
+    const fileName = document.getElementById('fileName');
+    const form = document.getElementById('uploadForm');
+    const submitBtn = document.getElementById('submitBtn');
+    const progress = document.getElementById('progress');
+    const progressFill = document.getElementById('progressFill');
+    const progressText = document.getElementById('progressText');
+    const result = document.getElementById('result');
+
+    dropZone.onclick = () => fileInput.click();
+    dropZone.ondragover = (e) => { e.preventDefault(); dropZone.classList.add('dragover'); };
+    dropZone.ondragleave = () => dropZone.classList.remove('dragover');
+    dropZone.ondrop = (e) => {
+      e.preventDefault();
+      dropZone.classList.remove('dragover');
+      if (e.dataTransfer.files.length && e.dataTransfer.files[0].type === 'video/mp4') {
+        fileInput.files = e.dataTransfer.files;
+        fileName.textContent = e.dataTransfer.files[0].name + ' (' + (e.dataTransfer.files[0].size/1024/1024).toFixed(2) + ' MB)';
+      }
+    };
+    fileInput.onchange = () => {
+      if (fileInput.files.length) fileName.textContent = fileInput.files[0].name + ' (' + (fileInput.files[0].size/1024/1024).toFixed(2) + ' MB)';
+    };
+
+    form.onsubmit = async (e) => {
+      e.preventDefault();
+      if (!fileInput.files.length) return alert('Please select a video file');
+
+      const formData = new FormData();
+      formData.append('file', fileInput.files[0]);
+      formData.append('name', document.getElementById('name').value || fileInput.files[0].name);
+      formData.append('app', document.getElementById('app').value);
+
+      submitBtn.disabled = true;
+      progress.style.display = 'block';
+      result.style.display = 'none';
+
+      const xhr = new XMLHttpRequest();
+      xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable) {
+          const pct = Math.round((e.loaded/e.total)*100);
+          progressFill.style.width = pct + '%';
+          progressText.textContent = 'Uploading... ' + pct + '%';
+        }
+      };
+      xhr.onload = () => {
+        submitBtn.disabled = false;
+        const data = JSON.parse(xhr.responseText);
+        if (xhr.status === 200 && data.success) {
+          result.className = 'result success';
+          result.innerHTML = '<strong>Upload successful!</strong><pre>' + JSON.stringify(data, null, 2) + '</pre>';
+          loadVideos();
+          form.reset();
+          fileName.textContent = '';
+        } else {
+          result.className = 'result error';
+          result.innerHTML = '<strong>Upload failed</strong><pre>' + JSON.stringify(data, null, 2) + '</pre>';
+        }
+        result.style.display = 'block';
+      };
+      xhr.onerror = () => {
+        submitBtn.disabled = false;
+        result.className = 'result error';
+        result.innerHTML = '<strong>Network error</strong>';
+        result.style.display = 'block';
+      };
+      xhr.open('POST', '/api/antmedia/upload');
+      xhr.send(formData);
+    };
+
+    async function loadVideos() {
+      try {
+        const res = await fetch('/api/antmedia/vod');
+        const data = await res.json();
+        const el = document.getElementById('videoList');
+        if (data.vods && data.vods.length) {
+          el.innerHTML = '<h3>Uploaded Videos</h3>' + data.vods.map(v =>
+            '<div class="video-item"><strong>' + (v.vodName || v.vodId) + '</strong><br>' +
+            '<small>ID: ' + v.vodId + '</small><br>' +
+            '<a href="http://localhost:5080/LiveApp/streams/' + v.vodId + '.mp4" target="_blank">Play Video</a></div>'
+          ).join('');
+        }
+      } catch(e) { console.error(e); }
+    }
+    loadVideos();
+  </script>
+</body>
+</html>

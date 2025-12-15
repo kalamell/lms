@@ -1,0 +1,94 @@
+<!-- Pre-test Settings -->
+<div class="card mb-4">
+  <div class="card-header">
+    <h5 class="card-title mb-0"><i class="icon-base ri ri-survey-line me-2"></i>Pre-test</h5>
+  </div>
+  <div class="card-body">
+    <div class="row">
+      <div class="col-md-4 mb-4">
+        <label class="form-label">เปิดใช้ Pre-test</label>
+        <select class="form-select" name="pretest">
+          <option value="0" <%= course?.pretest != 1 ? 'selected' : '' %>>ปิด</option>
+          <option value="1" <%= course?.pretest == 1 ? 'selected' : '' %>>เปิด</option>
+        </select>
+      </div>
+      <div class="col-md-8 mb-4">
+        <label class="form-label">เลือกแบบทดสอบ Pre-test</label>
+        <select class="form-select" name="pre_testing">
+          <option value="0">- - - เลือกแบบทดสอบ - - -</option>
+        </select>
+      </div>
+    </div>
+    <div class="mb-0">
+      <label class="form-label">คำอธิบาย Pre-test</label>
+      <div id="pretest_description-editor" class="quill-editor"><%- course?.pretest_description || '' %></div>
+      <input type="hidden" id="pretest_description" name="pretest_description">
+    </div>
+  </div>
+</div>
+
+<!-- Class Description -->
+<div class="card mb-4">
+  <div class="card-header">
+    <h5 class="card-title mb-0"><i class="icon-base ri ri-book-read-line me-2"></i>การเข้าเรียน</h5>
+  </div>
+  <div class="card-body">
+    <div class="mb-0">
+      <label class="form-label">คำอธิบายการเข้าเรียน</label>
+      <div id="class_description-editor" class="quill-editor"><%- course?.class_description || '' %></div>
+      <input type="hidden" id="class_description" name="class_description">
+    </div>
+  </div>
+</div>
+
+<!-- Post-test Settings -->
+<div class="card mb-4">
+  <div class="card-header">
+    <h5 class="card-title mb-0"><i class="icon-base ri ri-task-line me-2"></i>Post-test</h5>
+  </div>
+  <div class="card-body">
+    <div class="row">
+      <div class="col-md-4 mb-4">
+        <label class="form-label">เปิดใช้ Post-test</label>
+        <select class="form-select" name="posttest">
+          <option value="0" <%= course?.posttest != 1 ? 'selected' : '' %>>ปิด</option>
+          <option value="1" <%= course?.posttest == 1 ? 'selected' : '' %>>เปิด</option>
+        </select>
+      </div>
+      <div class="col-md-8 mb-4">
+        <label class="form-label">เลือกแบบทดสอบ Post-test</label>
+        <select class="form-select" name="post_testing">
+          <option value="0">- - - เลือกแบบทดสอบ - - -</option>
+        </select>
+      </div>
+    </div>
+    <div class="mb-0">
+      <label class="form-label">คำอธิบาย Post-test</label>
+      <div id="posttest_description-editor" class="quill-editor"><%- course?.posttest_description || '' %></div>
+      <input type="hidden" id="posttest_description" name="posttest_description">
+    </div>
+  </div>
+</div>
+
+<!-- Homework & Assignment -->
+<div class="card mb-4">
+  <div class="card-header">
+    <h5 class="card-title mb-0"><i class="icon-base ri ri-draft-line me-2"></i>งานที่มอบหมาย</h5>
+  </div>
+  <div class="card-body">
+    <div class="row mb-4">
+      <div class="col-md-4">
+        <label class="form-label">Homework</label>
+        <select class="form-select" name="homework">
+          <option value="0" <%= course?.homework != 1 ? 'selected' : '' %>>ปิด</option>
+          <option value="1" <%= course?.homework == 1 ? 'selected' : '' %>>เปิด</option>
+        </select>
+      </div>
+    </div>
+    <div class="mb-0">
+      <label class="form-label">คำอธิบายงานที่ได้รับมอบหมาย</label>
+      <div id="example_description-editor" class="quill-editor"><%- course?.example_description || '' %></div>
+      <input type="hidden" id="example_description" name="example_description">
+    </div>
+  </div>
+</div>

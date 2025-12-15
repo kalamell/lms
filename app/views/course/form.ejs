@@ -1,0 +1,212 @@
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="/dashboard">Dashboard</a></li>
+    <li class="breadcrumb-item"><a href="/course">Courses</a></li>
+    <li class="breadcrumb-item active"><%= action === 'create' ? 'Create' : 'Edit' %></li>
+  </ol>
+</nav>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h4 class="mb-1"><%= action === 'create' ? 'Create New Course' : 'Edit Course' %></h4>
+    <p class="text-muted mb-0"><%= course?.name || 'เพิ่มหลักสูตรใหม่เข้าสู่ระบบ' %></p>
+  </div>
+  <a href="/course" class="btn btn-outline-secondary">
+    <i class="icon-base ri ri-arrow-left-line me-2"></i>ย้อนกลับ
+  </a>
+</div>
+
+<% if (typeof error !== 'undefined' && error) { %>
+<div class="alert alert-danger alert-dismissible mb-4" role="alert">
+  <%= error %>
+  <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+</div>
+<% } %>
+
+<!-- Tabs Navigation -->
+<ul class="nav nav-tabs mb-4" role="tablist">
+  <li class="nav-item">
+    <a class="nav-link active" data-bs-toggle="tab" href="#tab-info">
+      <i class="icon-base ri ri-information-line me-2"></i>ข้อมูลหลักสูตร
+    </a>
+  </li>
+  <% if (action === 'edit') { %>
+  <li class="nav-item">
+    <a class="nav-link" data-bs-toggle="tab" href="#tab-documents">
+      <i class="icon-base ri ri-file-list-line me-2"></i>เอกสารประกอบ
+      <span class="badge bg-primary ms-1"><%= courseDocuments?.length || 0 %></span>
+    </a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link" data-bs-toggle="tab" href="#tab-learners">
+      <i class="icon-base ri ri-group-line me-2"></i>ผู้เรียน
+      <span class="badge bg-primary ms-1"><%= coursePositions?.length || 0 %></span>
+    </a>
+  </li>
+  <% } %>
+</ul>
+
+<!-- Tab Content -->
+<div class="tab-content">
+  <!-- Tab 1: Course Info -->
+  <div class="tab-pane fade show active" id="tab-info" role="tabpanel">
+    <form method="POST" action="/course/<%= action === 'create' ? 'create' : course.id + '/edit' %>" enctype="multipart/form-data" id="courseForm">
+      <div class="row">
+        <!-- Main Content -->
+        <div class="col-lg-8">
+          <%- include('partials/form-basic') %>
+          <%- include('partials/form-content') %>
+          <%- include('partials/form-tests') %>
+          <%- include('partials/form-email') %>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+          <%- include('partials/form-sidebar') %>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <% if (action === 'edit') { %>
+  <!-- Tab 2: Documents -->
+  <div class="tab-pane fade" id="tab-documents" role="tabpanel">
+    <%- include('partials/tab-documents') %>
+  </div>
+
+  <!-- Tab 3: Target Learners -->
+  <div class="tab-pane fade" id="tab-learners" role="tabpanel">
+    <%- include('partials/tab-learners') %>
+  </div>
+  <% } %>
+</div>
+
+<% if (action === 'edit' && course) { %>
+<!-- Delete Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">ยืนยันการลบ</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p>คุณต้องการลบหลักสูตร "<span id="deleteName"></span>" ใช่หรือไม่?</p>
+        <p class="text-muted small">การดำเนินการนี้ไม่สามารถย้อนกลับได้</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ยกเลิก</button>
+        <form id="deleteForm" method="POST" style="display:inline;">
+          <button type="submit" class="btn btn-danger">ลบ</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+<% } %>
+
+<style>
+.quill-editor {
+  min-height: 150px;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+}
+.quill-editor .ql-toolbar {
+  border-top-left-radius: 0.375rem;
+  border-top-right-radius: 0.375rem;
+}
+.quill-editor .ql-container {
+  border-bottom-left-radius: 0.375rem;
+  border-bottom-right-radius: 0.375rem;
+  min-height: 100px;
+}
+.doc-item {
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 0.375rem;
+  padding: 1rem;
+  margin-bottom: 0.5rem;
+  cursor: move;
+}
+.doc-item:hover {
+  background: #e9ecef;
+}
+.doc-item .doc-icon {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.375rem;
+  font-size: 1.25rem;
+}
+.position-item {
+  padding: 0.5rem;
+  border-radius: 0.25rem;
+  cursor: pointer;
+}
+.position-item:hover {
+  background: #f0f0f0;
+}
+.position-item.selected {
+  background: #d4edda;
+}
+</style>
+
+<script src="/theme/assets/vendor/libs/quill/quill.js"></script>
+<script src="/theme/assets/vendor/libs/sortablejs/sortable.js"></script>
+<script>
+const courseId = <%= course?.id || 'null' %>;
+
+document.addEventListener('DOMContentLoaded', function() {
+  // Quill toolbar config
+  const toolbarOptions = [
+    [{ 'header': [1, 2, 3, false] }],
+    ['bold', 'italic', 'underline', 'strike'],
+    [{ 'color': [] }, { 'background': [] }],
+    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+    ['link'],
+    ['clean']
+  ];
+
+  // Initialize all Quill editors
+  const editors = {};
+  const editorFields = [
+    'description', 'toc', 'howto', 'targetlearner',
+    'pretest_description', 'class_description', 'posttest_description',
+    'example_description', 'email_template'
+  ];
+
+  editorFields.forEach(function(field) {
+    const container = document.getElementById(field + '-editor');
+    if (container) {
+      editors[field] = new Quill('#' + field + '-editor', {
+        theme: 'snow',
+        placeholder: 'กรอกข้อมูล...',
+        modules: { toolbar: toolbarOptions }
+      });
+    }
+  });
+
+  // Update hidden inputs before form submit
+  const form = document.getElementById('courseForm');
+  if (form) {
+    form.addEventListener('submit', function() {
+      editorFields.forEach(function(field) {
+        const input = document.getElementById(field);
+        if (editors[field] && input) {
+          input.value = editors[field].root.innerHTML;
+        }
+      });
+    });
+  }
+
+  // Delete confirmation
+  window.confirmDelete = function(id, name) {
+    document.getElementById('deleteName').textContent = name;
+    document.getElementById('deleteForm').action = '/course/' + id + '/delete';
+    new bootstrap.Modal(document.getElementById('deleteModal')).show();
+  };
+});
+</script>

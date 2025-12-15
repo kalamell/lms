@@ -1,0 +1,146 @@
+<div class="container-xxl flex-grow-1 container-p-y">
+  <!-- Header -->
+  <div class="d-flex justify-content-between align-items-center mb-6">
+    <div>
+      <h4 class="mb-1">Department Management</h4>
+      <p class="text-muted mb-0">จัดการแผนก (Department)</p>
+    </div>
+    <a href="/settings/department/create" class="btn btn-primary">
+      <i class="icon-base ri ri-add-line me-2"></i>Add Department
+    </a>
+  </div>
+
+  <% if (typeof success !== 'undefined' || query.success) { %>
+  <div class="alert alert-success alert-dismissible mb-4" role="alert">
+    <% if (query.success === 'created') { %>
+    Department created successfully!
+    <% } else if (query.success === 'updated') { %>
+    Department updated successfully!
+    <% } else if (query.success === 'deleted') { %>
+    Department deleted successfully!
+    <% } %>
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  </div>
+  <% } %>
+
+  <% if (typeof error !== 'undefined' && error) { %>
+  <div class="alert alert-danger alert-dismissible mb-4" role="alert">
+    <%= error %>
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  </div>
+  <% } %>
+
+  <!-- Filter -->
+  <div class="card mb-4">
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-4">
+          <label class="form-label">Filter by Function</label>
+          <select class="form-select" id="filterFunction">
+            <option value="">All Functions</option>
+            <% functions.forEach(f => { %>
+            <option value="<%= f.name %>"><%= f.format_name %> - <%= f.name %></option>
+            <% }) %>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="card">
+    <div class="card-datatable table-responsive">
+      <table class="table datatables-department">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Function</th>
+            <th>Format</th>
+            <th>Order</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% departments.forEach(dept => { %>
+          <tr>
+            <td><%= dept.id %></td>
+            <td><strong><%= dept.name %></strong></td>
+            <td>
+              <span class="badge bg-label-primary"><%= dept.functions_name || 'N/A' %></span>
+            </td>
+            <td>
+              <span class="badge bg-label-info"><%= dept.format_name || 'N/A' %></span>
+            </td>
+            <td><%= dept.order %></td>
+            <td>
+              <% if (dept.status === 1) { %>
+              <span class="badge bg-label-success">Active</span>
+              <% } else { %>
+              <span class="badge bg-label-secondary">Inactive</span>
+              <% } %>
+            </td>
+            <td>
+              <div class="d-flex gap-2">
+                <a href="/settings/department/<%= dept.id %>/edit" class="btn btn-sm btn-icon btn-text-secondary rounded-pill">
+                  <i class="icon-base ri ri-edit-line"></i>
+                </a>
+                <button type="button" class="btn btn-sm btn-icon btn-text-secondary rounded-pill"
+                        onclick="confirmDelete(<%= dept.id %>, '<%= dept.name %>')">
+                  <i class="icon-base ri ri-delete-bin-line"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Confirm Delete</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p>Are you sure you want to delete "<span id="deleteName"></span>"?</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <form id="deleteForm" method="POST" style="display:inline;">
+          <button type="submit" class="btn btn-danger">Delete</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- contentFor('script') %>
+<script>
+function confirmDelete(id, name) {
+  document.getElementById('deleteName').textContent = name;
+  document.getElementById('deleteForm').action = '/settings/department/' + id + '/delete';
+  new bootstrap.Modal(document.getElementById('deleteModal')).show();
+}
+
+// Filter
+document.getElementById('filterFunction').addEventListener('change', function() {
+  const rows = document.querySelectorAll('.datatables-department tbody tr');
+  const filterValue = this.value.toLowerCase();
+
+  rows.forEach(row => {
+    const funcCell = row.cells[2].textContent.toLowerCase();
+    if (!filterValue || funcCell.includes(filterValue)) {
+      row.style.display = '';
+    } else {
+      row.style.display = 'none';
+    }
+  });
+});
+</script>

@@ -1,0 +1,342 @@
+<!-- Stats Cards -->
+  <div class="card mb-6">
+    <div class="card-widget-separator-wrapper">
+      <div class="card-body card-widget-separator">
+        <div class="row gy-4 gy-sm-1">
+          <div class="col-sm-6 col-lg-3">
+            <div class="d-flex justify-content-between align-items-start card-widget-1 border-end pb-4 pb-sm-0">
+              <div>
+                <p class="mb-1">Total Courses</p>
+                <h4 class="mb-1"><%= stats.total || 0 %></h4>
+                <p class="mb-0 text-muted">All courses</p>
+              </div>
+              <div class="avatar me-sm-6">
+                <span class="avatar-initial rounded-3 bg-label-primary">
+                  <i class="icon-base ri ri-book-open-line icon-28px"></i>
+                </span>
+              </div>
+            </div>
+            <hr class="d-none d-sm-block d-lg-none me-6" />
+          </div>
+          <div class="col-sm-6 col-lg-3">
+            <div class="d-flex justify-content-between align-items-start card-widget-2 border-end pb-4 pb-sm-0">
+              <div>
+                <p class="mb-1">Active</p>
+                <h4 class="mb-1"><%= stats.active || 0 %></h4>
+                <p class="mb-0"><span class="badge bg-label-success">Published</span></p>
+              </div>
+              <div class="avatar me-lg-6">
+                <span class="avatar-initial rounded-3 bg-label-success">
+                  <i class="icon-base ri ri-checkbox-circle-line icon-28px"></i>
+                </span>
+              </div>
+            </div>
+            <hr class="d-none d-sm-block d-lg-none" />
+          </div>
+          <div class="col-sm-6 col-lg-3">
+            <div class="d-flex justify-content-between align-items-start border-end pb-4 pb-sm-0 card-widget-3">
+              <div>
+                <p class="mb-1">Draft</p>
+                <h4 class="mb-1"><%= stats.draft || 0 %></h4>
+                <p class="mb-0"><span class="badge bg-label-warning">Pending</span></p>
+              </div>
+              <div class="avatar me-sm-6">
+                <span class="avatar-initial rounded-3 bg-label-warning">
+                  <i class="icon-base ri ri-edit-line icon-28px"></i>
+                </span>
+              </div>
+            </div>
+          </div>
+          <div class="col-sm-6 col-lg-3">
+            <div class="d-flex justify-content-between align-items-start">
+              <div>
+                <p class="mb-1">Inactive</p>
+                <h4 class="mb-1"><%= stats.inactive || 0 %></h4>
+                <p class="mb-0"><span class="badge bg-label-secondary">Disabled</span></p>
+              </div>
+              <div class="avatar">
+                <span class="avatar-initial rounded-3 bg-label-secondary">
+                  <i class="icon-base ri ri-close-circle-line icon-28px"></i>
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <% if (query.success) { %>
+  <div class="alert alert-success alert-dismissible mb-4" role="alert">
+    <% if (query.success === 'created') { %>
+    Course created successfully!
+    <% } else if (query.success === 'updated') { %>
+    Course updated successfully!
+    <% } else if (query.success === 'deleted') { %>
+    Course deleted successfully!
+    <% } else if (query.success === 'duplicated') { %>
+    Course duplicated successfully!
+    <% } %>
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  </div>
+  <% } %>
+
+  <% if (typeof error !== 'undefined' && error) { %>
+  <div class="alert alert-danger alert-dismissible mb-4" role="alert">
+    <%= error %>
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  </div>
+  <% } %>
+
+  <!-- Course List Table -->
+  <div class="card">
+    <div class="card-header border-bottom">
+      <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <h5 class="card-title mb-0">Course Management</h5>
+        <a href="/course/create" class="btn btn-primary">
+          <i class="icon-base ri ri-add-line me-2"></i>Add Course
+        </a>
+      </div>
+
+      <!-- Filter -->
+      <form method="GET" action="/course" class="mt-4">
+        <div class="row g-3">
+          <div class="col-md-4">
+            <input type="text" class="form-control" name="k" placeholder="Search by name, code, keywords..."
+                   value="<%= filters.keyword || '' %>">
+          </div>
+          <div class="col-md-2">
+            <select class="form-select" name="status">
+              <option value="">All Status</option>
+              <option value="1" <%= filters.status == '1' ? 'selected' : '' %>>Active</option>
+              <option value="2" <%= filters.status == '2' ? 'selected' : '' %>>Draft</option>
+              <option value="0" <%= filters.status == '0' ? 'selected' : '' %>>Inactive</option>
+            </select>
+          </div>
+          <div class="col-md-2">
+            <select class="form-select" name="type">
+              <option value="">All Types</option>
+              <option value="1" <%= filters.type == '1' ? 'selected' : '' %>>Normal</option>
+              <option value="2" <%= filters.type == '2' ? 'selected' : '' %>>SCORM 1.2</option>
+              <option value="3" <%= filters.type == '3' ? 'selected' : '' %>>SCORM 2004</option>
+            </select>
+          </div>
+          <div class="col-md-2">
+            <button type="submit" class="btn btn-outline-primary w-100">
+              <i class="icon-base ri ri-search-line me-1"></i>Search
+            </button>
+          </div>
+          <div class="col-md-2">
+            <a href="/course" class="btn btn-outline-secondary w-100">
+              <i class="icon-base ri ri-refresh-line me-1"></i>Reset
+            </a>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <div class="card-datatable table-responsive">
+      <table class="table">
+        <thead>
+          <tr>
+            <th style="width: 60px">ID</th>
+            <th>Course</th>
+            <th style="width: 120px">Code</th>
+            <th style="width: 100px">Type</th>
+            <th style="width: 100px">Status</th>
+            <th style="width: 100px">Docs</th>
+            <th style="width: 120px">Created</th>
+            <th style="width: 120px">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (courses.length === 0) { %>
+          <tr>
+            <td colspan="8" class="text-center py-4">
+              <div class="text-muted">
+                <i class="icon-base ri ri-book-open-line icon-48px mb-2 d-block"></i>
+                No courses found
+              </div>
+            </td>
+          </tr>
+          <% } %>
+          <% courses.forEach(course => { %>
+          <tr>
+            <td><%= course.id %></td>
+            <td>
+              <div class="d-flex align-items-center">
+                <div class="avatar avatar-sm me-3">
+                  <span class="avatar-initial rounded bg-label-primary">
+                    <i class="icon-base ri ri-book-2-line"></i>
+                  </span>
+                </div>
+                <div>
+                  <a href="/course/<%= course.id %>/edit" class="text-heading fw-medium">
+                    <%= course.name %>
+                  </a>
+                  <% if (course.name_en) { %>
+                  <br><small class="text-muted"><%= course.name_en %></small>
+                  <% } %>
+                </div>
+              </div>
+            </td>
+            <td>
+              <% if (course.course_code) { %>
+              <code><%= course.course_code %></code>
+              <% } else { %>
+              <span class="text-muted">-</span>
+              <% } %>
+            </td>
+            <td>
+              <span class="badge bg-label-info"><%= Course.getTypeLabel(course.type) %></span>
+            </td>
+            <td>
+              <span class="badge <%= Course.getStatusBadgeClass(course.status) %>">
+                <%= Course.getStatusLabel(course.status) %>
+              </span>
+            </td>
+            <td>
+              <span class="badge bg-label-secondary"><%= course.document_count || 0 %></span>
+            </td>
+            <td>
+              <% if (course.created_at) { %>
+              <%= new Date(course.created_at).toLocaleDateString('th-TH') %>
+              <% } else { %>
+              -
+              <% } %>
+            </td>
+            <td>
+              <div class="dropdown">
+                <button type="button" class="btn btn-icon btn-text-secondary dropdown-toggle hide-arrow" data-bs-toggle="dropdown">
+                  <i class="icon-base ri ri-more-2-line"></i>
+                </button>
+                <div class="dropdown-menu dropdown-menu-end">
+                  <a class="dropdown-item" href="/course/<%= course.id %>/edit">
+                    <i class="icon-base ri ri-edit-line me-2"></i>Edit
+                  </a>
+                  <button type="button" class="dropdown-item" onclick="duplicateCourse(<%= course.id %>, '<%= course.name.replace(/'/g, "\\'") %>')">
+                    <i class="icon-base ri ri-file-copy-line me-2"></i>Duplicate
+                  </button>
+                  <div class="dropdown-divider"></div>
+                  <button type="button" class="dropdown-item text-danger" onclick="confirmDelete(<%= course.id %>, '<%= course.name.replace(/'/g, "\\'") %>')">
+                    <i class="icon-base ri ri-delete-bin-line me-2"></i>Delete
+                  </button>
+                </div>
+              </div>
+            </td>
+          </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+
+    <% if (courses.length > 0) { %>
+    <div class="card-footer d-flex justify-content-between align-items-center flex-wrap">
+      <div class="text-muted">
+        Showing <%= ((pagination.currentPage - 1) * pagination.perPage) + 1 %> - <%= Math.min(pagination.currentPage * pagination.perPage, pagination.total) %> of <%= pagination.total %> courses
+      </div>
+      <% if (pagination.totalPages > 1) { %>
+      <nav>
+        <ul class="pagination pagination-sm mb-0">
+          <% if (pagination.hasPrev) { %>
+          <li class="page-item">
+            <a class="page-link" href="/course?page=1<%= filters.keyword ? '&k=' + filters.keyword : '' %><%= filters.status ? '&status=' + filters.status : '' %><%= filters.type ? '&type=' + filters.type : '' %>">
+              <i class="icon-base ri ri-arrow-left-double-line"></i>
+            </a>
+          </li>
+          <li class="page-item">
+            <a class="page-link" href="/course?page=<%= pagination.currentPage - 1 %><%= filters.keyword ? '&k=' + filters.keyword : '' %><%= filters.status ? '&status=' + filters.status : '' %><%= filters.type ? '&type=' + filters.type : '' %>">
+              <i class="icon-base ri ri-arrow-left-s-line"></i>
+            </a>
+          </li>
+          <% } %>
+
+          <%
+          let startPage = Math.max(1, pagination.currentPage - 2);
+          let endPage = Math.min(pagination.totalPages, pagination.currentPage + 2);
+          %>
+
+          <% for (let p = startPage; p <= endPage; p++) { %>
+          <li class="page-item <%= p === pagination.currentPage ? 'active' : '' %>">
+            <a class="page-link" href="/course?page=<%= p %><%= filters.keyword ? '&k=' + filters.keyword : '' %><%= filters.status ? '&status=' + filters.status : '' %><%= filters.type ? '&type=' + filters.type : '' %>">
+              <%= p %>
+            </a>
+          </li>
+          <% } %>
+
+          <% if (pagination.hasNext) { %>
+          <li class="page-item">
+            <a class="page-link" href="/course?page=<%= pagination.currentPage + 1 %><%= filters.keyword ? '&k=' + filters.keyword : '' %><%= filters.status ? '&status=' + filters.status : '' %><%= filters.type ? '&type=' + filters.type : '' %>">
+              <i class="icon-base ri ri-arrow-right-s-line"></i>
+            </a>
+          </li>
+          <li class="page-item">
+            <a class="page-link" href="/course?page=<%= pagination.totalPages %><%= filters.keyword ? '&k=' + filters.keyword : '' %><%= filters.status ? '&status=' + filters.status : '' %><%= filters.type ? '&type=' + filters.type : '' %>">
+              <i class="icon-base ri ri-arrow-right-double-line"></i>
+            </a>
+          </li>
+          <% } %>
+        </ul>
+      </nav>
+      <% } %>
+    </div>
+    <% } %>
+  </div>
+
+<!-- Delete Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Confirm Delete</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p>Are you sure you want to delete "<span id="deleteName"></span>"?</p>
+        <p class="text-muted small">This action cannot be undone.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <form id="deleteForm" method="POST" style="display:inline;">
+          <button type="submit" class="btn btn-danger">Delete</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Duplicate Modal -->
+<div class="modal fade" id="duplicateModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Duplicate Course</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p>Create a copy of "<span id="duplicateName"></span>"?</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <form id="duplicateForm" method="POST" style="display:inline;">
+          <button type="submit" class="btn btn-primary">Duplicate</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- contentFor('script') %>
+<script>
+function confirmDelete(id, name) {
+  document.getElementById('deleteName').textContent = name;
+  document.getElementById('deleteForm').action = '/course/' + id + '/delete';
+  new bootstrap.Modal(document.getElementById('deleteModal')).show();
+}
+
+function duplicateCourse(id, name) {
+  document.getElementById('duplicateName').textContent = name;
+  document.getElementById('duplicateForm').action = '/course/' + id + '/duplicate';
+  new bootstrap.Modal(document.getElementById('duplicateModal')).show();
+}
+</script>

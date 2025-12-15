@@ -1,0 +1,209 @@
+<!doctype html>
+<html
+  lang="th"
+  class="layout-wide customizer-hide"
+  dir="ltr"
+  data-skin="default"
+  data-bs-theme="light"
+  data-assets-path="/theme/assets/"
+  data-template="horizontal-menu-template">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0" />
+    <title>Login - iLearn LMS</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="/theme/assets/img/favicon/favicon.ico" />
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+
+    <link rel="stylesheet" href="/theme/assets/vendor/fonts/iconify-icons.css" />
+
+    <!-- Core CSS -->
+    <link rel="stylesheet" href="/theme/assets/vendor/libs/node-waves/node-waves.css" />
+    <link rel="stylesheet" href="/theme/assets/vendor/libs/pickr/pickr-themes.css" />
+    <link rel="stylesheet" href="/theme/assets/vendor/css/core.css" />
+    <link rel="stylesheet" href="/theme/assets/css/demo.css" />
+
+    <!-- Vendors CSS -->
+    <link rel="stylesheet" href="/theme/assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.css" />
+    <link rel="stylesheet" href="/theme/assets/vendor/libs/@form-validation/form-validation.css" />
+
+    <!-- Page CSS -->
+    <link rel="stylesheet" href="/theme/assets/vendor/css/pages/page-auth.css" />
+
+    <!-- Helpers -->
+    <script src="/theme/assets/vendor/js/helpers.js"></script>
+    <script src="/theme/assets/vendor/libs/@algolia/autocomplete-js.js"></script>
+    <script src="/theme/assets/vendor/js/template-customizer.js"></script>
+    <script src="/theme/assets/js/config.js"></script>
+
+    <style>
+      body { font-family: 'Sarabun', 'Inter', sans-serif; }
+      .btn-lotuss {
+        background: linear-gradient(135deg, #e31837 0%, #c41230 100%);
+        border: none;
+        color: white;
+      }
+      .btn-lotuss:hover {
+        background: linear-gradient(135deg, #c41230 0%, #a00f28 100%);
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(227, 24, 55, 0.4);
+      }
+      .sso-btn {
+        padding: 14px 24px;
+        font-size: 16px;
+        font-weight: 600;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+      }
+      .sso-btn i {
+        font-size: 20px;
+      }
+      .brand-logo {
+        max-height: 60px;
+        width: auto;
+      }
+    </style>
+  </head>
+
+  <body>
+    <!-- Content -->
+    <div class="position-relative">
+      <div class="authentication-wrapper authentication-basic container-p-y p-4 p-sm-0">
+        <div class="authentication-inner py-6">
+          <!-- Login -->
+          <div class="card p-md-7 p-1">
+            <!-- Logo -->
+            <div class="app-brand justify-content-center mt-5">
+              <a href="/" class="app-brand-link gap-2">
+                <img src="/public/assets/images/logo_axtra_ilearn_2.png" alt="iLearn" class="brand-logo" />
+              </a>
+            </div>
+            <!-- /Logo -->
+
+            <div class="card-body mt-1">
+              <h4 class="mb-1 text-center">Welcome to iLearn LMS!</h4>
+              <p class="mb-5 text-center">Please sign-in to your account</p>
+
+              <!-- Lotus's SSO Section -->
+              <div class="mb-5">
+                <button type="button" class="btn sso-btn btn-lotuss d-flex align-items-center justify-content-center gap-3 w-100" id="loginLotuss">
+                  <i class="icon-base ri ri-store-2-line"></i>
+                  <span>Login with Lotus's</span>
+                </button>
+              </div>
+
+              <div class="divider my-5">
+                <div class="divider-text">or Makro Login</div>
+              </div>
+
+              <!-- Makro Login Form -->
+              <form id="formMakro" class="mb-5" action="/auth/login/makro" method="POST">
+                <div class="form-floating form-floating-outline mb-5">
+                  <input
+                    type="text"
+                    class="form-control"
+                    id="username"
+                    name="username"
+                    placeholder="Enter your username"
+                    autofocus />
+                  <label for="username">Username</label>
+                </div>
+                <div class="mb-5">
+                  <div class="form-password-toggle">
+                    <div class="input-group input-group-merge">
+                      <div class="form-floating form-floating-outline">
+                        <input
+                          type="password"
+                          id="password"
+                          class="form-control"
+                          name="password"
+                          placeholder="&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;" />
+                        <label for="password">Password</label>
+                      </div>
+                      <span class="input-group-text cursor-pointer"><i class="icon-base ri ri-eye-off-line icon-20px"></i></span>
+                    </div>
+                  </div>
+                </div>
+                <div class="mb-5 d-flex justify-content-between mt-5">
+                  <div class="form-check mt-2">
+                    <input class="form-check-input" type="checkbox" id="remember-me" name="remember" />
+                    <label class="form-check-label" for="remember-me"> Remember Me </label>
+                  </div>
+                  <a href="/forgot-password" class="float-end mb-1 mt-2">
+                    <span>Forgot Password?</span>
+                  </a>
+                </div>
+                <div class="mb-5">
+                  <button class="btn sso-btn btn-lotuss d-flex align-items-center justify-content-center gap-3 w-100" type="submit">
+                    <i class="icon-base ri ri-store-2-line"></i>
+                    <span>Login With Makro</span></button>
+                </div>
+              </form>
+
+              <% if (typeof error !== 'undefined' && error) { %>
+              <div class="alert alert-danger" role="alert">
+                <%= error %>
+              </div>
+              <% } %>
+            </div>
+          </div>
+          <!-- /Login -->
+          <img
+            alt="mask"
+            src="/theme/assets/img/illustrations/auth-basic-login-mask-light.png"
+            class="authentication-image d-none d-lg-block"
+            data-app-light-img="illustrations/auth-basic-login-mask-light.png"
+            data-app-dark-img="illustrations/auth-basic-login-mask-dark.png" />
+        </div>
+      </div>
+    </div>
+    <!-- / Content -->
+
+    <!-- Core JS -->
+    <script src="/theme/assets/vendor/libs/jquery/jquery.js"></script>
+    <script src="/theme/assets/vendor/libs/popper/popper.js"></script>
+    <script src="/theme/assets/vendor/js/bootstrap.js"></script>
+    <script src="/theme/assets/vendor/libs/node-waves/node-waves.js"></script>
+    <script src="/theme/assets/vendor/libs/@algolia/autocomplete-js.js"></script>
+    <script src="/theme/assets/vendor/libs/pickr/pickr.js"></script>
+    <script src="/theme/assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.js"></script>
+    <script src="/theme/assets/vendor/libs/hammer/hammer.js"></script>
+    <script src="/theme/assets/vendor/libs/i18n/i18n.js"></script>
+    <script src="/theme/assets/vendor/js/menu.js"></script>
+
+    <!-- Main JS -->
+    <script src="/theme/assets/js/main.js"></script>
+
+    <!-- Page JS -->
+    <script>
+      // Lotus's SSO
+      document.getElementById('loginLotuss').addEventListener('click', function() {
+        window.location.href = '/auth/sso/lotuss';
+      });
+
+      // Password toggle
+      document.querySelectorAll('.form-password-toggle .input-group-text').forEach(function(el) {
+        el.addEventListener('click', function() {
+          const input = this.parentElement.querySelector('input');
+          const icon = this.querySelector('i');
+          if (input.type === 'password') {
+            input.type = 'text';
+            icon.classList.remove('ri-eye-off-line');
+            icon.classList.add('ri-eye-line');
+          } else {
+            input.type = 'password';
+            icon.classList.remove('ri-eye-line');
+            icon.classList.add('ri-eye-off-line');
+          }
+        });
+      });
+    </script>
+  </body>
+</html>

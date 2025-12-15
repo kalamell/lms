@@ -1,0 +1,402 @@
+<!-- Basic Information -->
+<div class="card mb-4">
+  <div class="card-header">
+    <h5 class="card-title mb-0"><i class="icon-base ri ri-information-line me-2"></i>ข้อมูลพื้นฐาน</h5>
+  </div>
+  <div class="card-body">
+    <!-- Icon & Cover Upload with Dropzone Style -->
+    <div class="row mb-4">
+      <!-- Icon Upload -->
+      <div class="col-md-3">
+        <label class="form-label">ไอคอน</label>
+        <div class="upload-zone" id="icon-upload-zone">
+          <div class="upload-preview" id="icon-preview">
+            <% if (course?.icon) { %>
+            <img src="/storage/course/<%= course.icon_path || '' %><%= course.icon %>" class="preview-image" id="icon-img">
+            <button type="button" class="btn-remove" onclick="removeFile('icon')" title="ลบไฟล์">
+              <i class="ri ri-close-line"></i>
+            </button>
+            <% } else { %>
+            <div class="upload-placeholder" id="icon-placeholder">
+              <i class="ri ri-image-add-line upload-icon"></i>
+              <span class="upload-text">ลากไฟล์มาวางหรือคลิกเพื่ออัพโหลด</span>
+              <span class="upload-hint">JPG, PNG, GIF (สูงสุด 5MB)</span>
+            </div>
+            <% } %>
+          </div>
+          <input type="file" class="upload-input" name="icon" id="icon-input"
+                 accept=".jpg,.jpeg,.png,.gif,.webp" onchange="handleFileSelect(this, 'icon')">
+        </div>
+      </div>
+
+      <!-- Cover Upload -->
+      <div class="col-md-9">
+        <label class="form-label">รูปปก (Cover)</label>
+        <div class="upload-zone upload-zone-wide" id="cover-upload-zone">
+          <div class="upload-preview" id="cover-preview">
+            <% if (course?.cover) { %>
+            <img src="/storage/course/<%= course.cover_path || '' %><%= course.cover %>" class="preview-image preview-cover" id="cover-img">
+            <button type="button" class="btn-remove" onclick="removeFile('cover')" title="ลบไฟล์">
+              <i class="ri ri-close-line"></i>
+            </button>
+            <% } else { %>
+            <div class="upload-placeholder" id="cover-placeholder">
+              <i class="ri ri-image-add-line upload-icon"></i>
+              <span class="upload-text">ลากไฟล์มาวางหรือคลิกเพื่ออัพโหลด</span>
+              <span class="upload-hint">JPG, PNG, GIF (สูงสุด 5MB) - แนะนำขนาด 1200x400px</span>
+            </div>
+            <% } %>
+          </div>
+          <input type="file" class="upload-input" name="cover" id="cover-input"
+                 accept=".jpg,.jpeg,.png,.gif,.webp" onchange="handleFileSelect(this, 'cover')">
+        </div>
+      </div>
+    </div>
+
+    <div class="mb-4">
+      <label class="form-label" for="name">ชื่อหลักสูตร <span class="text-danger">*</span></label>
+      <input type="text" class="form-control" id="name" name="name"
+             value="<%= course?.name || '' %>" required placeholder="กรอกชื่อหลักสูตร">
+    </div>
+
+    <div class="row">
+      <div class="col-md-4 mb-4">
+        <label class="form-label" for="course_code">Course Code</label>
+        <input type="text" class="form-control" id="course_code" name="course_code"
+               value="<%= course?.course_code || '' %>" placeholder="e.g., THE00101">
+      </div>
+      <div class="col-md-4 mb-4">
+        <label class="form-label" for="expire_at">Duration</label>
+        <input type="text" class="form-control" id="expire_at" name="expire_at"
+               value="<%= course?.expire_at || '' %>" placeholder="e.g., 1.5">
+      </div>
+      <div class="col-md-4 mb-4">
+        <label class="form-label" for="totaltopic">จำนวนบทเรียน</label>
+        <input type="text" class="form-control" id="totaltopic" name="totaltopic"
+               value="<%= course?.totaltopic || '' %>" placeholder="e.g., 5">
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-md-6 mb-4">
+        <label class="form-label" for="keywords">Keywords</label>
+        <input type="text" class="form-control" id="keywords" name="keywords"
+               value="<%= course?.keywords || '' %>" placeholder="คั่นด้วยคอมม่า">
+      </div>
+      <div class="col-md-6 mb-4">
+        <label class="form-label" for="courselevel">ระดับหลักสูตร</label>
+        <input type="text" class="form-control" id="courselevel" name="courselevel"
+               value="<%= course?.courselevel || '' %>" placeholder="e.g., Beginner">
+      </div>
+    </div>
+
+    <div class="mb-0">
+      <label class="form-label" for="howtopass">เกณฑ์การสอบผ่าน</label>
+      <input type="text" class="form-control" id="howtopass" name="howtopass"
+             value="<%= course?.howtopass || '' %>" placeholder="e.g., ผ่าน 80%">
+    </div>
+  </div>
+</div>
+
+<style>
+.upload-zone {
+  border: 2px dashed var(--bs-border-color);
+  border-radius: 0.5rem;
+  min-height: 150px;
+  position: relative;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: var(--bs-body-bg);
+  overflow: hidden;
+}
+
+.upload-zone:hover,
+.upload-zone.drag-over {
+  border-color: var(--bs-primary);
+  background: rgba(var(--bs-primary-rgb), 0.05);
+}
+
+.upload-zone-wide {
+  min-height: 150px;
+}
+
+.upload-preview {
+  width: 100%;
+  height: 100%;
+  min-height: 150px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.upload-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  text-align: center;
+  color: var(--bs-secondary-color);
+}
+
+.upload-icon {
+  font-size: 3rem;
+  margin-bottom: 0.75rem;
+  color: var(--bs-border-color);
+}
+
+.upload-zone:hover .upload-icon {
+  color: var(--bs-primary);
+}
+
+.upload-text {
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin-bottom: 0.25rem;
+}
+
+.upload-hint {
+  font-size: 0.75rem;
+  color: var(--bs-secondary-color);
+}
+
+.upload-input {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+  z-index: 2;
+}
+
+.preview-image {
+  max-width: 100%;
+  max-height: 140px;
+  object-fit: contain;
+  border-radius: 0.375rem;
+}
+
+.preview-cover {
+  max-height: 140px;
+  width: auto;
+}
+
+.btn-remove {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: none;
+  background: var(--bs-danger);
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.upload-zone:hover .btn-remove {
+  opacity: 1;
+}
+
+.btn-remove:hover {
+  background: var(--bs-danger);
+  transform: scale(1.1);
+}
+
+/* File info display */
+.file-info {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 0.5rem;
+  font-size: 0.75rem;
+  text-align: center;
+}
+
+.file-info .file-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.file-info .file-size {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* Video/PDF Preview */
+.preview-video {
+  max-width: 100%;
+  max-height: 140px;
+}
+
+.preview-file {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1rem;
+}
+
+.preview-file i {
+  font-size: 3rem;
+  margin-bottom: 0.5rem;
+}
+
+.preview-file.pdf i { color: #e74c3c; }
+.preview-file.video i { color: #9b59b6; }
+.preview-file.doc i { color: #3498db; }
+</style>
+
+<script>
+// Upload Zone Functions
+function handleFileSelect(input, type) {
+  const file = input.files[0];
+  if (!file) return;
+
+  const zone = document.getElementById(type + '-upload-zone');
+  const preview = document.getElementById(type + '-preview');
+
+  // Validate file size (5MB for images, 100MB for videos)
+  const maxSize = file.type.startsWith('video/') ? 100 * 1024 * 1024 : 5 * 1024 * 1024;
+  if (file.size > maxSize) {
+    alert('ไฟล์ใหญ่เกินไป (สูงสุด ' + (maxSize / 1024 / 1024) + 'MB)');
+    input.value = '';
+    return;
+  }
+
+  // Show preview
+  showFilePreview(file, type, preview);
+}
+
+function showFilePreview(file, type, previewEl) {
+  const isImage = file.type.startsWith('image/');
+  const isVideo = file.type.startsWith('video/');
+  const isPdf = file.type === 'application/pdf';
+
+  let html = '';
+
+  if (isImage) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      html = `
+        <img src="${e.target.result}" class="preview-image ${type === 'cover' ? 'preview-cover' : ''}" id="${type}-img">
+        <button type="button" class="btn-remove" onclick="removeFile('${type}')" title="ลบไฟล์">
+          <i class="ri ri-close-line"></i>
+        </button>
+        <div class="file-info">
+          <div class="file-name">${file.name}</div>
+          <div class="file-size">${formatFileSize(file.size)}</div>
+        </div>
+      `;
+      previewEl.innerHTML = html;
+    };
+    reader.readAsDataURL(file);
+  } else if (isVideo) {
+    html = `
+      <div class="preview-file video">
+        <i class="ri ri-video-fill"></i>
+        <span>${file.name}</span>
+        <span class="text-muted">${formatFileSize(file.size)}</span>
+      </div>
+      <button type="button" class="btn-remove" onclick="removeFile('${type}')" title="ลบไฟล์">
+        <i class="ri ri-close-line"></i>
+      </button>
+    `;
+    previewEl.innerHTML = html;
+  } else if (isPdf) {
+    html = `
+      <div class="preview-file pdf">
+        <i class="ri ri-file-pdf-2-fill"></i>
+        <span>${file.name}</span>
+        <span class="text-muted">${formatFileSize(file.size)}</span>
+      </div>
+      <button type="button" class="btn-remove" onclick="removeFile('${type}')" title="ลบไฟล์">
+        <i class="ri ri-close-line"></i>
+      </button>
+    `;
+    previewEl.innerHTML = html;
+  } else {
+    html = `
+      <div class="preview-file doc">
+        <i class="ri ri-file-text-fill"></i>
+        <span>${file.name}</span>
+        <span class="text-muted">${formatFileSize(file.size)}</span>
+      </div>
+      <button type="button" class="btn-remove" onclick="removeFile('${type}')" title="ลบไฟล์">
+        <i class="ri ri-close-line"></i>
+      </button>
+    `;
+    previewEl.innerHTML = html;
+  }
+}
+
+function removeFile(type) {
+  const input = document.getElementById(type + '-input');
+  const preview = document.getElementById(type + '-preview');
+
+  input.value = '';
+
+  preview.innerHTML = `
+    <div class="upload-placeholder" id="${type}-placeholder">
+      <i class="ri ri-image-add-line upload-icon"></i>
+      <span class="upload-text">ลากไฟล์มาวางหรือคลิกเพื่ออัพโหลด</span>
+      <span class="upload-hint">JPG, PNG, GIF (สูงสุด 5MB)</span>
+    </div>
+  `;
+}
+
+function formatFileSize(bytes) {
+  if (bytes === 0) return '0 Bytes';
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+// Drag and Drop
+document.addEventListener('DOMContentLoaded', function() {
+  const zones = document.querySelectorAll('.upload-zone');
+
+  zones.forEach(zone => {
+    const input = zone.querySelector('.upload-input');
+    const type = input.id.replace('-input', '');
+
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+      zone.addEventListener(eventName, preventDefaults, false);
+    });
+
+    function preventDefaults(e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+
+    ['dragenter', 'dragover'].forEach(eventName => {
+      zone.addEventListener(eventName, () => zone.classList.add('drag-over'), false);
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+      zone.addEventListener(eventName, () => zone.classList.remove('drag-over'), false);
+    });
+
+    zone.addEventListener('drop', function(e) {
+      const dt = e.dataTransfer;
+      const files = dt.files;
+      if (files.length > 0) {
+        input.files = files;
+        handleFileSelect(input, type);
+      }
+    }, false);
+  });
+});
+</script>

@@ -1,0 +1,146 @@
+<div class="row">
+  <!-- Current Documents -->
+  <div class="col-lg-7">
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="card-title mb-0">
+          <i class="icon-base ri ri-file-list-line me-2"></i>เอกสารประกอบหลักสูตร
+        </h5>
+        <span class="badge bg-primary" id="doc-count"><%= courseDocuments?.length || 0 %></span>
+      </div>
+      <div class="card-body">
+        <div id="course-documents" class="sortable-documents">
+          <% if (courseDocuments && courseDocuments.length > 0) { %>
+            <% courseDocuments.forEach((doc, index) => { %>
+            <div class="doc-item d-flex align-items-center" data-id="<%= doc.document_id %>">
+              <div class="doc-icon bg-light me-3">
+                <i class="icon-base <%= doc.typeIcon %>"></i>
+              </div>
+              <div class="flex-grow-1">
+                <h6 class="mb-0"><%= doc.name %></h6>
+                <small class="text-muted"><%= doc.typeLabel %></small>
+              </div>
+              <div>
+                <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeDocument(<%= doc.document_id %>)">
+                  <i class="icon-base ri ri-delete-bin-line"></i>
+                </button>
+              </div>
+            </div>
+            <% }) %>
+          <% } else { %>
+            <div class="text-center text-muted py-5" id="no-docs-message">
+              <i class="icon-base ri ri-file-list-line" style="font-size: 3rem;"></i>
+              <p class="mt-2 mb-0">ยังไม่มีเอกสารประกอบ</p>
+              <p class="small">ค้นหาและเพิ่มเอกสารจากด้านขวา</p>
+            </div>
+          <% } %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Search Documents -->
+  <div class="col-lg-5">
+    <div class="card">
+      <div class="card-header">
+        <h5 class="card-title mb-0">
+          <i class="icon-base ri ri-search-line me-2"></i>ค้นหาเอกสาร
+        </h5>
+      </div>
+      <div class="card-body">
+        <div class="mb-3">
+          <input type="text" class="form-control" id="doc-search" placeholder="พิมพ์ชื่อเอกสาร...">
+        </div>
+        <div id="search-results" style="max-height: 400px; overflow-y: auto;">
+          <div class="text-center text-muted py-4">
+            <i class="icon-base ri ri-search-2-line" style="font-size: 2rem;"></i>
+            <p class="mt-2 mb-0 small">พิมพ์เพื่อค้นหาเอกสาร</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Document search
+let searchTimeout;
+document.getElementById('doc-search').addEventListener('input', function(e) {
+  clearTimeout(searchTimeout);
+  const keyword = e.target.value;
+
+  if (keyword.length < 2) {
+    document.getElementById('search-results').innerHTML = `
+      <div class="text-center text-muted py-4">
+        <i class="icon-base ri ri-search-2-line" style="font-size: 2rem;"></i>
+        <p class="mt-2 mb-0 small">พิมพ์อย่างน้อย 2 ตัวอักษร</p>
+      </div>`;
+    return;
+  }
+
+  searchTimeout = setTimeout(() => {
+    fetch('/course/api/documents/search?k=' + encodeURIComponent(keyword) + '&courseId=' + courseId)
+      .then(r => r.json())
+      .then(res => {
+        if (res.success && res.data.length > 0) {
+          document.getElementById('search-results').innerHTML = res.data.map(doc => `
+            <div class="doc-item d-flex align-items-center mb-2" style="cursor: pointer" onclick="addDocument(${doc.id}, '${doc.name.replace(/'/g, "\\'")}')">
+              <div class="doc-icon bg-light me-3">
+                <i class="icon-base ${doc.typeIcon}"></i>
+              </div>
+              <div class="flex-grow-1">
+                <h6 class="mb-0">${doc.name}</h6>
+                <small class="text-muted">${doc.typeLabel}</small>
+              </div>
+              <div>
+                <i class="icon-base ri ri-add-line text-success"></i>
+              </div>
+            </div>
+          `).join('');
+        } else {
+          document.getElementById('search-results').innerHTML = `
+            <div class="text-center text-muted py-4">
+              <i class="icon-base ri ri-file-unknow-line" style="font-size: 2rem;"></i>
+              <p class="mt-2 mb-0 small">ไม่พบเอกสาร</p>
+            </div>`;
+        }
+      });
+  }, 300);
+});
+
+// Add document
+function addDocument(documentId, name) {
+  fetch('/course/api/' + courseId + '/documents/add', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ documentId })
+  })
+  .then(r => r.json())
+  .then(res => {
+    if (res.success) {
+      location.reload();
+    } else {
+      alert('Error: ' + res.error);
+    }
+  });
+}
+
+// Remove document
+function removeDocument(documentId) {
+  if (!confirm('ต้องการลบเอกสารนี้ออกจากหลักสูตร?')) return;
+
+  fetch('/course/api/' + courseId + '/documents/remove', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ documentId })
+  })
+  .then(r => r.json())
+  .then(res => {
+    if (res.success) {
+      location.reload();
+    } else {
+      alert('Error: ' + res.error);
+    }
+  });
+}
+</script>

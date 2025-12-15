@@ -1,0 +1,264 @@
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="/dashboard">Dashboard</a></li>
+    <li class="breadcrumb-item"><a href="/user">Users</a></li>
+    <li class="breadcrumb-item active"><%= user.employee_id || 'User Detail' %></li>
+  </ol>
+</nav>
+
+<div class="row">
+  <!-- User Profile Card -->
+  <div class="col-lg-4">
+    <div class="card mb-4">
+      <div class="card-body text-center">
+        <div class="avatar avatar-xl mb-3">
+          <% if (user.avatar || user.avatar_path) { %>
+          <img src="<%= User.getAvatarUrl(user) %>" alt="" class="rounded-circle" style="width: 100px; height: 100px; object-fit: cover;">
+          <% } else { %>
+          <span class="avatar-initial rounded-circle bg-label-primary" style="width: 100px; height: 100px; font-size: 2.5rem; display: flex; align-items: center; justify-content: center;">
+            <%= (user.first_name || user.name_thai || 'U').charAt(0).toUpperCase() %>
+          </span>
+          <% } %>
+        </div>
+        <h4 class="mb-1"><%= User.getDisplayName(user) %></h4>
+        <p class="text-muted mb-2"><%= user.employee_id || '-' %></p>
+        <div class="mb-3">
+          <span class="badge <%= User.getTypeBadgeClass(user.type) %> me-1">
+            <%= User.getTypeLabel(user.type) %>
+          </span>
+          <span class="badge <%= User.getStatusBadgeClass(user) %>">
+            <%= User.getStatusLabel(user) %>
+          </span>
+        </div>
+        <a href="/user/<%= user.id %>/edit" class="btn btn-primary btn-sm">
+          <i class="ri ri-edit-line me-1"></i>Edit
+        </a>
+      </div>
+      <hr class="my-0">
+      <div class="card-body">
+        <ul class="list-unstyled mb-0">
+          <% if (user.email) { %>
+          <li class="mb-3">
+            <i class="ri ri-mail-line me-2 text-primary"></i>
+            <a href="mailto:<%= user.email %>"><%= user.email %></a>
+          </li>
+          <% } %>
+          <% if (user.phone) { %>
+          <li class="mb-3">
+            <i class="ri ri-phone-line me-2 text-primary"></i>
+            <a href="tel:<%= user.phone %>"><%= user.phone %></a>
+          </li>
+          <% } %>
+          <% if (user.position) { %>
+          <li class="mb-3">
+            <i class="ri ri-briefcase-line me-2 text-primary"></i>
+            <%= user.position %>
+          </li>
+          <% } %>
+          <% if (user.department) { %>
+          <li class="mb-3">
+            <i class="ri ri-building-line me-2 text-primary"></i>
+            <%= user.department %>
+          </li>
+          <% } %>
+          <% if (user.format_name) { %>
+          <li class="mb-3">
+            <i class="ri ri-organization-chart me-2 text-primary"></i>
+            <%= user.format_name %>
+          </li>
+          <% } %>
+          <% if (user.st_thai) { %>
+          <li class="mb-3">
+            <i class="ri ri-map-pin-line me-2 text-primary"></i>
+            <%= user.st_thai %>
+          </li>
+          <% } %>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Additional Info Card -->
+    <div class="card mb-4">
+      <div class="card-header">
+        <h5 class="card-title mb-0">
+          <i class="ri ri-information-line me-2"></i>Additional Information
+        </h5>
+      </div>
+      <div class="card-body">
+        <ul class="list-unstyled mb-0">
+          <% if (user.birthdate) { %>
+          <li class="mb-2">
+            <span class="text-muted">Birthdate:</span>
+            <span class="float-end"><%= new Date(user.birthdate).toLocaleDateString('th-TH') %></span>
+          </li>
+          <% } %>
+          <% if (user.gender) { %>
+          <li class="mb-2">
+            <span class="text-muted">Gender:</span>
+            <span class="float-end"><%= user.gender %></span>
+          </li>
+          <% } %>
+          <% if (user.education) { %>
+          <li class="mb-2">
+            <span class="text-muted">Education:</span>
+            <span class="float-end"><%= user.education %></span>
+          </li>
+          <% } %>
+          <% if (user.started_at) { %>
+          <li class="mb-2">
+            <span class="text-muted">Started:</span>
+            <span class="float-end"><%= new Date(user.started_at).toLocaleDateString('th-TH') %></span>
+          </li>
+          <% } %>
+          <% if (user.created_at) { %>
+          <li class="mb-2">
+            <span class="text-muted">Created:</span>
+            <span class="float-end"><%= new Date(user.created_at).toLocaleDateString('th-TH') %></span>
+          </li>
+          <% } %>
+          <% if (user.is_prehiring) { %>
+          <li class="mb-2">
+            <span class="text-muted">Type:</span>
+            <span class="float-end">Outsource</span>
+          </li>
+          <% } %>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Course History -->
+  <div class="col-lg-8">
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="card-title mb-0">
+          <i class="ri ri-book-open-line me-2"></i>ผลการเรียน
+          <span class="badge bg-primary ms-2"><%= pagination?.total?.toLocaleString() || 0 %></span>
+        </h5>
+      </div>
+      <div class="card-body">
+        <% if (courseHistory && courseHistory.length > 0) { %>
+        <div class="table-responsive">
+          <table class="table table-hover">
+            <thead>
+              <tr>
+                <th>Course</th>
+                <th class="text-center">Pretest</th>
+                <th class="text-center">Posttest</th>
+                <th class="text-center">Score</th>
+                <th>Started</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% courseHistory.forEach(course => { %>
+              <tr>
+                <td>
+                  <div>
+                    <strong><%= course.course_name || '-' %></strong>
+                    <% if (course.course_id) { %>
+                    <br><small class="text-muted">ID: <%= course.course_id %></small>
+                    <% } %>
+                  </div>
+                </td>
+                <td class="text-center">
+                  <% if (course.pretest !== null) { %>
+                  <span class="badge bg-label-info"><%= course.pretest %></span>
+                  <% } else { %>
+                  <span class="text-muted">-</span>
+                  <% } %>
+                </td>
+                <td class="text-center">
+                  <% if (course.posttest !== null) { %>
+                  <span class="badge bg-label-primary"><%= course.posttest %></span>
+                  <% } else { %>
+                  <span class="text-muted">-</span>
+                  <% } %>
+                </td>
+                <td class="text-center">
+                  <% if (course.score !== null && course.total_score !== null) { %>
+                  <strong><%= course.score %></strong> / <%= course.total_score %>
+                  <% } else if (course.score !== null) { %>
+                  <strong><%= course.score %></strong>
+                  <% } else { %>
+                  <span class="text-muted">-</span>
+                  <% } %>
+                </td>
+                <td>
+                  <% if (course.created_at) { %>
+                  <%= new Date(course.created_at).toLocaleDateString('th-TH') %>
+                  <% } else { %>
+                  -
+                  <% } %>
+                </td>
+                <td>
+                  <% if (course.is_finished === 1) { %>
+                  <span class="badge bg-label-success">Completed</span>
+                  <% } else if (course.is_finished === 2) { %>
+                  <span class="badge bg-label-warning">Pending Review</span>
+                  <% } else { %>
+                  <span class="badge bg-label-info">In Progress</span>
+                  <% } %>
+                </td>
+              </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination -->
+        <% if (pagination && pagination.totalPages > 1) { %>
+        <div class="d-flex justify-content-between align-items-center flex-wrap mt-4">
+          <div class="text-muted small">
+            Showing <%= ((pagination.currentPage - 1) * pagination.perPage) + 1 %> - <%= Math.min(pagination.currentPage * pagination.perPage, pagination.total) %> of <%= pagination.total.toLocaleString() %> records
+          </div>
+          <nav>
+            <ul class="pagination pagination-sm mb-0">
+              <li class="page-item <%= pagination.currentPage === 1 ? 'disabled' : '' %>">
+                <a class="page-link" href="?<%= new URLSearchParams({...query, page: 1}).toString() %>">
+                  <i class="ri ri-arrow-left-double-line"></i>
+                </a>
+              </li>
+              <li class="page-item <%= pagination.currentPage === 1 ? 'disabled' : '' %>">
+                <a class="page-link" href="?<%= new URLSearchParams({...query, page: pagination.currentPage - 1}).toString() %>">
+                  <i class="ri ri-arrow-left-s-line"></i>
+                </a>
+              </li>
+
+              <%
+              let startPage = Math.max(1, pagination.currentPage - 2);
+              let endPage = Math.min(pagination.totalPages, pagination.currentPage + 2);
+              %>
+
+              <% for (let p = startPage; p <= endPage; p++) { %>
+              <li class="page-item <%= p === pagination.currentPage ? 'active' : '' %>">
+                <a class="page-link" href="?<%= new URLSearchParams({...query, page: p}).toString() %>"><%= p %></a>
+              </li>
+              <% } %>
+
+              <li class="page-item <%= pagination.currentPage === pagination.totalPages ? 'disabled' : '' %>">
+                <a class="page-link" href="?<%= new URLSearchParams({...query, page: pagination.currentPage + 1}).toString() %>">
+                  <i class="ri ri-arrow-right-s-line"></i>
+                </a>
+              </li>
+              <li class="page-item <%= pagination.currentPage === pagination.totalPages ? 'disabled' : '' %>">
+                <a class="page-link" href="?<%= new URLSearchParams({...query, page: pagination.totalPages}).toString() %>">
+                  <i class="ri ri-arrow-right-double-line"></i>
+                </a>
+              </li>
+            </ul>
+          </nav>
+        </div>
+        <% } %>
+
+        <% } else { %>
+        <div class="text-center py-5">
+          <i class="ri ri-book-line" style="font-size: 3rem; color: var(--bs-secondary);"></i>
+          <p class="mt-3 text-muted">No course history found</p>
+        </div>
+        <% } %>
+      </div>
+    </div>
+  </div>
+</div>
