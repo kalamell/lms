@@ -1,7 +1,6 @@
 import express from 'express';
 import expressLayouts from 'express-ejs-layouts';
 import session from 'express-session';
-import { createClient } from 'redis';
 import dotenv from 'dotenv';
 import multer from 'multer';
 import fs from 'fs';
@@ -10,7 +9,7 @@ import { fileURLToPath } from 'url';
 import jwt from 'jsonwebtoken';
 
 // Config
-import { initLmsDatabase, initTescoDatabase, getLmsDb, getTescoDb } from './config/database.js';
+import { initLmsDatabase, initTescoDatabase, initRedis, getLmsDb, getTescoDb, getRedis } from './config/database.js';
 
 // Routes
 import routes from './routes/index.js';
@@ -96,28 +95,6 @@ const upload = multer({
 
 // Database pools (initialized in startServer)
 
-// Redis connection
-let redisClient;
-async function initRedis() {
-  try {
-    redisClient = createClient({
-      socket: {
-        host: process.env.REDIS_HOST,
-        port: process.env.REDIS_PORT
-      },
-      password: process.env.REDIS_PASSWORD
-    });
-
-    redisClient.on('error', (err) => console.log('❌ Redis Client Error:', err));
-    redisClient.on('connect', () => console.log('✅ Redis connected'));
-
-    await redisClient.connect();
-  } catch (err) {
-    console.error('❌ Redis connection error:', err.message);
-    setTimeout(initRedis, 5000);
-  }
-}
-
 // Generate JWT Token for Ant Media
 function generateAntMediaToken() {
   const secretKey = process.env.ANT_MEDIA_SECRET_KEY;
@@ -152,7 +129,7 @@ app.get('/api/status', (req, res) => {
     services: {
       database: getLmsDb() ? '✅ Connected' : '❌ Disconnected',
       tescoDb: getTescoDb() ? '✅ Connected' : '❌ Disconnected',
-      redis: redisClient?.isOpen ? '✅ Connected' : '❌ Disconnected',
+      redis: getRedis()?.isOpen ? '✅ Connected' : '❌ Disconnected',
       antmedia: 'Check /health endpoint'
     }
   });
@@ -179,7 +156,7 @@ app.get('/auth/token', (req, res) => {
 app.get('/health', async (req, res) => {
   try {
     const dbStatus = getLmsDb() ? 'ok' : 'error';
-    const redisStatus = redisClient?.isOpen ? 'ok' : 'error';
+    const redisStatus = getRedis()?.isOpen ? 'ok' : 'error';
 
     // Check Ant Media Server
     let antmediaStatus = 'error';
@@ -222,11 +199,11 @@ app.get('/test/db', async (req, res) => {
 // Test redis connection
 app.get('/test/redis', async (req, res) => {
   try {
-    if (!redisClient?.isOpen) {
+    if (!getRedis()?.isOpen) {
       return res.status(503).json({ error: 'Redis not connected' });
     }
-    await redisClient.set('test-key', 'test-value');
-    const value = await redisClient.get('test-key');
+    await getRedis().set('test-key', 'test-value');
+    const value = await getRedis().get('test-key');
     res.json({ success: true, message: 'Redis connection OK', value });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -498,8 +475,8 @@ app.post('/api/antmedia/upload', upload.single('file'), async (req, res) => {
     };
 
     // Store in Redis
-    if (redisClient?.isOpen) {
-      await redisClient.lPush('uploaded_videos', JSON.stringify(uploadedVideo));
+    if (getRedis()?.isOpen) {
+      await getRedis().lPush('uploaded_videos', JSON.stringify(uploadedVideo));
     }
 
     res.json({
@@ -530,8 +507,8 @@ app.get('/videos/uploaded', async (req, res) => {
     let videos = [];
 
     // Get from Redis
-    if (redisClient?.isOpen) {
-      const videosList = await redisClient.lRange('uploaded_videos', 0, -1);
+    if (getRedis()?.isOpen) {
+      const videosList = await getRedis().lRange('uploaded_videos', 0, -1);
       videos = videosList.map(v => JSON.parse(v));
     }
 
@@ -551,8 +528,8 @@ app.get('/my-videos', async (req, res) => {
     let videos = [];
 
     // Get from Redis
-    if (redisClient?.isOpen) {
-      const videosList = await redisClient.lRange('uploaded_videos', 0, -1);
+    if (getRedis()?.isOpen) {
+      const videosList = await getRedis().lRange('uploaded_videos', 0, -1);
       videos = videosList.map(v => JSON.parse(v));
     }
 
