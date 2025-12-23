@@ -95,6 +95,8 @@ class Dashboard {
     return this.getCachedOrFetch(cacheKey, async () => {
       const db = this.getDb();
       const companyCondition = this.getCompanyCondition('u', company);
+      const startDate = `${year}-01-01`;
+      const endDate = `${year}-12-31 23:59:59`;
 
       const [rows] = await db.query(`
         SELECT
@@ -107,9 +109,9 @@ class Dashboard {
         FROM class_student cs
         LEFT JOIN user u ON cs.user_id = u.id
         WHERE cs.deleted_at IS NULL
-          AND YEAR(cs.created_at) = ?
+          AND cs.created_at BETWEEN ? AND ?
           AND ${companyCondition}
-      `, [year]);
+      `, [startDate, endDate]);
       return rows[0];
     });
   }
@@ -140,6 +142,8 @@ class Dashboard {
     return this.getCachedOrFetch(cacheKey, async () => {
       const db = this.getDb();
       const companyCondition = this.getCompanyCondition('u', company);
+      const startDate = `${year}-01-01`;
+      const endDate = `${year}-12-31 23:59:59`;
 
       const [rows] = await db.query(`
         SELECT
@@ -153,12 +157,12 @@ class Dashboard {
         LEFT JOIN user u ON cs.user_id = u.id
         WHERE cs.deleted_at IS NULL
           AND cs.course_id IS NOT NULL
-          AND YEAR(cs.created_at) = ?
+          AND cs.created_at BETWEEN ? AND ?
           AND ${companyCondition}
         GROUP BY cs.course_id
         ORDER BY total_enrollments DESC
         LIMIT ?
-      `, [year, limit]);
+      `, [startDate, endDate, limit]);
       return rows;
     });
   }
@@ -172,6 +176,8 @@ class Dashboard {
     return this.getCachedOrFetch(cacheKey, async () => {
       const db = this.getDb();
       const companyCondition = this.getCompanyCondition('u', company);
+      const startDate = `${year}-01-01`;
+      const endDate = `${year}-12-31 23:59:59`;
 
       const [rows] = await db.query(`
         SELECT
@@ -181,11 +187,11 @@ class Dashboard {
         FROM class_student cs
         LEFT JOIN user u ON cs.user_id = u.id
         WHERE cs.deleted_at IS NULL
-          AND YEAR(cs.created_at) = ?
+          AND cs.created_at BETWEEN ? AND ?
           AND ${companyCondition}
         GROUP BY MONTH(cs.created_at)
         ORDER BY month
-      `, [year]);
+      `, [startDate, endDate]);
       return rows;
     });
   }
@@ -199,6 +205,8 @@ class Dashboard {
     return this.getCachedOrFetch(cacheKey, async () => {
       const db = this.getDb();
       const companyCondition = this.getCompanyCondition('u', company);
+      const startDate = `${year}-01-01`;
+      const endDate = `${year}-12-31 23:59:59`;
 
       const [rows] = await db.query(`
         SELECT
@@ -220,11 +228,11 @@ class Dashboard {
         LEFT JOIN course co ON cs.course_id = co.id
         WHERE cs.deleted_at IS NULL
           AND cs.is_finished = 1
-          AND YEAR(cs.created_at) = ?
+          AND cs.created_at BETWEEN ? AND ?
           AND ${companyCondition}
         ORDER BY cs.updated_at DESC
         LIMIT ?
-      `, [year, limit]);
+      `, [startDate, endDate, limit]);
       return rows;
     });
   }

@@ -18,7 +18,7 @@ services:
       - DB_HOST=mariadb
       - DB_USER=lms_user
       - DB_PASSWORD=lms_password
-      - DB_NAME=lms_database
+      - DB_NAME=tesco_elearning
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - ANTMEDIA_STREAMS_PATH=/antmedia-streams
